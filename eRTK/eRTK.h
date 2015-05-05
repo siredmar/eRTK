@@ -4,6 +4,9 @@
  * Created: 27.04.2015 13:38:51
  *  Author: er
  */ 
+#include <avr/io.h>
+#include <stddef.h>
+
 #ifndef ERTK_H_
 #define ERTK_H_
 
@@ -46,6 +49,8 @@ void eRTK_SetReady( uint8_t tid );     //task fuer bereit erklaeren
 void eRTK_SetSuspended( uint8_t tid ); //task suspendieren
 void eRTK_WaitUntil( uint8_t then );   //warte auf den zeitpunkt
 void eRTK_Sleep_ms( uint16_t ms );     //warte eine gewisse zeit
+void eRTK_get_sema( uint8_t semaid );  /* Warten bis Semaphore frei ist und danach besetzen */
+void eRTK_wefet( uint8_t timeout );    //Task suspendieren fuer eine gewisse zeit
 void eRTK_init( void );                //initialisieren der datenstrukturen
 void eRTK_timer_init( void );          //system timer initialisieren
 void eRTK_go( void );                  //start der hoechstprioren ready task, notfalls idle

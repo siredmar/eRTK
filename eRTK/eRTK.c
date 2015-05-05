@@ -41,7 +41,7 @@ s_tcd * pTaskRdy;      /* einfache verkettung aller ready tasks ueber tcd.next i
 
 /*
   die perfcounter: 
-  stellen in einem schieberegister die letzten 16 messergebnisse dar.
+  stellen in einem schieberegister die letzten 256 messergebnisse dar.
   bei system im leerlauf stehen die zaehler auf 1000-overhead.
   eine schleife dauert 16 zyklen, alle 1ms wird abgefragt und da sind 16000 zyklen ausgefuehrt worden.
   je mehr systemlast um so kleiner der zaehlerstand.
@@ -68,10 +68,8 @@ void eRTK_Idle( void ) {
   while( 1 ) {
     ATOMIC_BLOCK( ATOMIC_FORCEON ) { //14+2=16 cycles pro loop -> 16MHz -> 1000 inc/ms
       ++eRTK_perfcount;
-      //asm volatile ( "nop\n" );
-      //asm volatile ( "nop\n" );
      }
-    oIDLEfast( 1 );
+    oIDLEfast( 1 ); //2 cycles fuer 2xnop oder ein output bit setzen
    }
  }
 
@@ -189,35 +187,39 @@ void eRTK_go( void ) { /* start der hoechstprioren ready task, notfalls idle */
  */
 static __inline__ void insertat( s_tcd *pthis, s_tcd *newone ) { //newone vor pthis eintragen
   if( !pthis || !newone ) deadbeef( SYS_NULLPTR );
-  if( pthis->pbefore == NULL ) { //der erste tcd
-    pTaskRdy=newone;
-    newone->pbefore=NULL;
+  ATOMIC_BLOCK( ATOMIC_RESTORESTATE ) {
+    if( pthis->pbefore == NULL ) { //der erste tcd
+      pTaskRdy=newone;
+      newone->pbefore=NULL;
+     }
+    else { //tcd in der kette
+      pthis->pbefore->pnext=newone;
+      newone->pbefore=pthis->pbefore;
+     }
+    newone->pnext=pthis;
+    pthis->pbefore=newone;
    }
-  else {
-    pthis->pbefore->pnext=newone;
-    newone->pbefore=pthis->pbefore;
-   }
-  newone->pnext=pthis;
-  pthis->pbefore=newone;
  }
 
 static __inline__ void removeat( s_tcd *pthis ) { //den node pthis austragen
-  if( !pthis ) {
-    deadbeef( SYS_NULLPTR );
+  ATOMIC_BLOCK( ATOMIC_RESTORESTATE ) {
+    if( pthis==NULL || pthis==&tcd[0] ) { //0 oder idle task
+      deadbeef( SYS_NULLPTR );
+     }
+    if( pthis->pbefore==NULL ) { //es ist der erste block auf den pTskReady zeigt
+      if( pthis->pnext==NULL ) { //und er hat keinen nachfolger den man vorziehen kann
+        deadbeef( SYS_NULLPTR );
+       }
+      pTaskRdy=pthis->pnext; //nachfolger einhaengen
+      pthis->pnext->pbefore=NULL;
+     }
+    else { //mittendrin in der kette
+      pthis->pbefore->pnext=pthis->pnext;
+      pthis->pnext->pbefore=pthis->pbefore;
+     } 
+    pthis->pnext=NULL; //diesen block aus verkettung nehmen
+    pthis->pbefore=NULL;
    }
-  if( pthis->timer==0 ) {
-    deadbeef( SYS_NULLTIMER );
-   }
-  if( pthis->pbefore==NULL ) { //es ist der erste block auf den pTskReady zeigt
-    pTaskRdy=pthis->pnext; //nachfolger einhaengen
-    pthis->pnext->pbefore=NULL;
-   }
-  else { //mittendrin in der kette
-    pthis->pbefore->pnext=pthis->pnext;
-    pthis->pnext->pbefore=pthis->pbefore;
-   } 
-  pthis->pnext=NULL; //diesen block aus verkettung nehmen
-  pthis->pbefore=NULL;
  }  
 
 uint8_t eRTK_GetTid( void ) { //holen der eigenen task id
@@ -226,25 +228,31 @@ uint8_t eRTK_GetTid( void ) { //holen der eigenen task id
 
 //Verwaltung der ready list mit einfuegen/ausfuegen in der reihenfolge der prio
 void eRTK_SetReady( uint8_t tid ) {
+  if( !tid ) deadbeef( SYS_NULLPTR );
   s_tcd *pthis=pTaskRdy;
-  //p->hoechstprioren tcd oder idle
-  do {
-    if( tcd[tid].prio > pthis->prio || pthis->pnext==NULL ) { //neuer eintrag hat hoehere prio oder es gibt keinen nachfolger
-      insertat( pthis, &tcd[tid] );
-      break;
-     }
-   } while( ( pthis=pthis->pnext ) );
+  ATOMIC_BLOCK( ATOMIC_RESTORESTATE ) {
+    tcd[tid].timer=0; //timer loeschen damit er nicht spaeter nochmal startet
+    do { //pthis->hoechstprioren tcd oder idle
+      if( tcd[tid].prio > pthis->prio || pthis->pnext==NULL ) { //neuer eintrag hat hoehere prio oder es gibt keinen nachfolger
+        insertat( pthis, &tcd[tid] );
+        break;
+       }
+     } while( ( pthis=pthis->pnext ) );
+   }
  }
 
 //pTskRdy->tcdx->tcdy->0 es muss immer mindestens ein tcd (idle) in der liste bleiben
 void eRTK_SetSuspended( uint8_t tid ) { //tcd[tid] aus der ready list austragen
+  if( !tid ) deadbeef( SYS_NULLPTR );
   s_tcd *pthis=pTaskRdy;
-  do {
-    if( pthis->tid==tid ) {
-      removeat( pthis );
-      break;
-     }
-   } while( ( pthis=pthis->pnext ) );
+  ATOMIC_BLOCK( ATOMIC_RESTORESTATE ) {
+    do {
+      if( pthis->tid==tid ) {
+        removeat( pthis );
+        break;
+       }
+     } while( ( pthis=pthis->pnext ) );
+   }
  }
 
 void eRTK_wefet( uint8_t timeout ) {
@@ -287,6 +295,7 @@ static inline __attribute__((__always_inline__)) uint8_t xch ( uint8_t volatile 
  }
 
 void eRTK_get_sema( uint8_t semaid ) { /* Warten bis Semaphore frei ist und danach besetzen */
+  if( semaid>=ANZSEMA ) deadbeef( SYS_UNKNOWN );
   while( xch( &sema[semaid], 1 ) ) { /* >0 = sema blockiert */
     sei();
     eRTK_wefet( 1 );
@@ -294,6 +303,7 @@ void eRTK_get_sema( uint8_t semaid ) { /* Warten bis Semaphore frei ist und dana
  }
 
 void eRTK_free_sema( uint8_t semaid ) {
+  if( semaid>=ANZSEMA ) deadbeef( SYS_UNKNOWN );
   xch( &sema[semaid], 0 ) ;
  }
 
@@ -495,6 +505,8 @@ void eRTK_timer_init( void ) {
 #elif defined (__AVR_ATxmega128A1U__)
 #endif
  }
+
+
 
 
 #if eRTKTEST
