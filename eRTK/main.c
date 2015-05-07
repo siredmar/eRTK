@@ -14,7 +14,13 @@ void tskHighPrio( uint16_t param0, void *param1 ) { //prio ist 20
    }
  }
 
-//tmain2 wird viermal gestartet, param0 ist 0..3
+//tskUART wird viermal gestartet, param0 ist 0..3
+//es wird derselbe programm code genutzt, anhand des param0 wird UART0..UART3 in jeder task genutzt
+//und 1 byte, 16 byte == sendepuffergroesse oder 20 byte gesendet und wieder zurueckgelesen
+//also eine sog. loop back gemacht.
+//wird nichts empfangen so gibt es time outs.
+//wird alles empofangen so geht es unverzueglich weiter in der schleife.
+//ist gedacht als belastungstest der taskwechselmechanismen und datenstrukturen.
 void tskUART( uint16_t param0, void *param1 ) { //prio ist 10
   while( 1 ) { //com test
     char buffer[50];
