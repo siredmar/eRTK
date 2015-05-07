@@ -4,17 +4,17 @@
  * Created: 04.05.2015 15:52:50
  *  Author: er
  */ 
-
+#include <util/atomic.h>
 #include "eRTK.h"
 
 #ifndef UART_H_
 #define UART_H_
 
-//uart ports
+//uart port bitraten NUR DANN definieren wenn port gebraucht wird spart flash speicher
 #define UART0_BAUD 19200lu
-//#define UART1_BAUD 9600lu
-//#define UART2_BAUD 9600lu
-//#define UART3_BAUD 9600lu
+#define UART1_BAUD 9600lu
+#define UART2_BAUD 9600lu
+#define UART3_BAUD 9600lu
 
 
 // Berechnungen z.T. zitiert aus www.microcontroller.net Forum
@@ -61,7 +61,7 @@
 #define BAUD3_REAL (F_CPU/(16*(UBRR3_VAL+1)))               //Reale Baudrate
 #define BAUD3_ERROR ((BAUD3_REAL*1000)/UART3_BAUD)          //Fehler in Promille, 1000 = kein Fehler.
 #if ((BAUD3_ERROR<990) || (BAUD3_ERROR>1010))
-  #error Systematischer Fehler der Baudrate0 groesser 1% und damit zu hoch!
+  #error Systematischer Fehler der Baudrate3 groesser 1% und damit zu hoch!
 #endif
 #endif
 

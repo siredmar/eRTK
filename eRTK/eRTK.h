@@ -10,6 +10,8 @@
 #ifndef ERTK_H_
 #define ERTK_H_
 
+#define VANZTASK 5                     //anzahl definierter prozesse
+
 #define F_CPU       16000000ul
 
 #define eRTKHZ            1000         //system tick rate
@@ -20,15 +22,19 @@
 #error eRTK:Systematischer 8 Bit Overflow Fehler im SYSTIMER !
 #endif
 
-//#define ERTKDEBUG                      //gibt ein paar mehr infos zum debugging
+#define ERTKDEBUG                      //gibt ein paar mehr infos zum debugging
 //ueberwachungsfunktionen
-#define eRTK_STARTUP_MS   1000         //solange geben wir allen tasks zusammen zum hochlauf bis wir overload pruefen
+#define eRTK_STARTUP_MS      0         //solange geben wir allen tasks zusammen zum hochlauf bis wir overload pruefen
 #define eRTK_MAX_OVERLOAD    0         //und dies ist die max. erlaubte zahl an overload phasen bevor deadbeef() aufgerufen wird
 
 #define ERTK_STACKSIZE     256
 
-#undef IDLELED
+#define IDLELED
 #ifdef IDLELED
+#ifndef sbi
+#define sbi(port,nr) (port|=_BV(nr))
+#define cbi(port,nr) (port&=~_BV(nr))
+#endif
 //diagnose led fuer idle anzeige, wenn gewuenscht
 #define oIDLE(a)          { ( a ) ? sbi( PORTE, PE2 ) : cbi( PORTE, PE2 ); sbi( DDRE, PE2 ); }
 #define oIDLEfast(a)      { ( a ) ? sbi( PORTE, PE2 ) : cbi( PORTE, PE2 ); }
@@ -54,8 +60,6 @@ void eRTK_wefet( uint8_t timeout );    //Task suspendieren fuer eine gewisse zei
 void eRTK_init( void );                //initialisieren der datenstrukturen
 void eRTK_timer_init( void );          //system timer initialisieren
 void eRTK_go( void );                  //start der hoechstprioren ready task, notfalls idle
-
-#define VANZTASK 2                     //anzahl definierter prozesse
 
 typedef struct {                       //der task control block
   void ( *task )( uint16_t param0, void *param1 );

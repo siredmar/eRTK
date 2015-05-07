@@ -56,8 +56,16 @@ volatile uint8_t  eRTK_iperf;            //index im array 0..255
 volatile uint16_t eRTK_ticks;            //wie spaet ist es nach dem urknall in ms
 volatile uint8_t  eRTK_cnt_overload;     //zaehlt die aufeinanderfolgenden overload phasen
 
-void eRTK_Idle( void ) {
-  while( 0 ) {
+void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
+#ifdef ERTKDEBUG
+  while( 1 ) {           //14+2=16 cycles pro loop -> 16MHz -> 1000 inc/ms
+    cli();               //cli=1clock
+    ++eRTK_perfcount;    //lds,lds,adiw,sts,sts=5x2clocks
+    sei();               //sei=1clock
+    oIDLEfast( 1 );      //2 cycles fuer 2xnop oder ein output bit setzen
+   }                     //rjmp=2clocks
+#else
+  while( 1 ) {
     set_sleep_mode( SLEEP_MODE_IDLE );
     sleep_enable();
     sei();
@@ -65,13 +73,9 @@ void eRTK_Idle( void ) {
     sleep_cpu();
     sleep_disable();
    }
-  while( 1 ) {
-    ATOMIC_BLOCK( ATOMIC_FORCEON ) { //14+2=16 cycles pro loop -> 16MHz -> 1000 inc/ms
-      ++eRTK_perfcount;
-     }
-    oIDLEfast( 1 ); //2 cycles fuer 2xnop oder ein output bit setzen
-   }
+#endif
  }
+
 
 __attribute__ ((noinline)) void deadbeef( tsys reason ) {
   //static tsys m_reason=reason;
@@ -122,8 +126,13 @@ void __attribute__ ((naked)) eRTK_sheduler( void ) { /* start der hoechstprioren
      }
     if( p ) { //task stand noch in der ready liste
       //teste pri des nachfolgers
-      if( p->prio == p->pnext->prio ) { //schalte weiter wenn nachfolger prio genauso ist
-        akttask=p->pnext->tid;
+      if( p->pnext!=NULL ) { //wenn es nachfolger gibt
+         if( p->prio == p->pnext->prio ) { //schalte weiter wenn nachfolger prio genauso ist
+           akttask=p->pnext->tid;
+          }
+         else {
+           akttask=pTaskRdy->tid;
+          }
        }
       else { //sonst nimm den ersten in der liste, der muss per definition die gleiche prio haben da wir bei kleineren prios gar nicht suchen !
         akttask=pTaskRdy->tid;
@@ -228,7 +237,9 @@ uint8_t eRTK_GetTid( void ) { //holen der eigenen task id
 
 //Verwaltung der ready list mit einfuegen/ausfuegen in der reihenfolge der prio
 void eRTK_SetReady( uint8_t tid ) {
-  if( !tid ) deadbeef( SYS_NULLPTR );
+  if( !tid ) deadbeef( SYS_NULLPTR ); //idle task ist immer ready
+  if( tcd[tid].pnext || tcd[tid].pbefore ) deadbeef( SYS_VERIFY ); //war gar nicht suspendiert
+  //
   s_tcd *pthis=pTaskRdy;
   ATOMIC_BLOCK( ATOMIC_RESTORESTATE ) {
     tcd[tid].timer=0; //timer loeschen damit er nicht spaeter nochmal startet
@@ -243,7 +254,8 @@ void eRTK_SetReady( uint8_t tid ) {
 
 //pTskRdy->tcdx->tcdy->0 es muss immer mindestens ein tcd (idle) in der liste bleiben
 void eRTK_SetSuspended( uint8_t tid ) { //tcd[tid] aus der ready list austragen
-  if( !tid ) deadbeef( SYS_NULLPTR );
+  if( !tid ) deadbeef( SYS_NULLPTR ); //idle task darf nicht suspendiert werden
+  if( !tcd[tid].pbefore && !tcd[tid].pnext ) deadbeef( SYS_VERIFY ); //war nicht in ready list
   s_tcd *pthis=pTaskRdy;
   ATOMIC_BLOCK( ATOMIC_RESTORESTATE ) {
     do {
@@ -258,6 +270,7 @@ void eRTK_SetSuspended( uint8_t tid ) { //tcd[tid] aus der ready list austragen
 void eRTK_wefet( uint8_t timeout ) {
   if( timeout ) { //sonst klinkt sich die task in einem wait_until() fuer immer aus
     ATOMIC_BLOCK( ATOMIC_RESTORESTATE ) { //14+2=16 cycles pro loop -> 16MHz -> 1000 inc/ms
+      if( tcd[akttask].timer ) deadbeef( SYS_UNKNOWN );
       tcd[akttask].timer=timeout;
       eRTK_SetSuspended( akttask );
       eRTK_sheduler();
