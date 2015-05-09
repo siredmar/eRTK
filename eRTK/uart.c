@@ -5,6 +5,7 @@
  *  Author: er
  */ 
 #include <avr/interrupt.h>
+#include "eRTK.h"
 #include "uart.h"
 
 #ifdef UART0_BAUD
@@ -121,8 +122,10 @@ ISR( USART0_RX_vect ) { //uart hat ein neues zeichen
 ISR( USART0_UDRE_vect ) {   //uart will naechstes zeichen senden
   oIDLE( 0 );
   if( tx_in0==tx_out0 ) {   //nothing to send
-    if( txtid0 ) eRTK_SetReady( txtid0 ); //set task ready
-    txtid0=0;
+    if( txtid0 ) {
+	  eRTK_SetReady( txtid0 ); //set task ready
+      txtid0=0;
+	 }
     UCSR0B&=~( 1<<UDRIE0 ); //disable TX interrupt
     return;
    }
@@ -153,8 +156,10 @@ ISR( USART1_RX_vect ) { //uart hat ein neues zeichen
 ISR( USART1_UDRE_vect ) {   //uart will naechstes zeichen senden
   oIDLE( 0 );
   if( tx_in1==tx_out1 ) {   //nothing to send
-    if( txtid1 ) eRTK_SetReady( txtid1 ); //set task ready
-    txtid1=0;
+    if( txtid1 ) {
+	  eRTK_SetReady( txtid1 ); //set task ready
+      txtid1=0;
+	 }
     UCSR1B&=~( 1<<UDRIE1 ); //disable TX interrupt
     return;
    }
@@ -185,8 +190,10 @@ ISR( USART2_RX_vect ) { //uart hat ein neues zeichen
 ISR( USART2_UDRE_vect ) {   //uart will naechstes zeichen senden
   oIDLE( 0 );
   if( tx_in2==tx_out2 ) {   //nothing to send
-    if( txtid2 ) eRTK_SetReady( txtid2 ); //set task ready
-    txtid2=0;
+    if( txtid2 ) {
+	  eRTK_SetReady( txtid2 ); //set task ready
+      txtid2=0;
+	 }
     UCSR2B&=~( 1<<UDRIE2 ); //disable TX interrupt
     return;
    }
@@ -200,7 +207,7 @@ ISR( USART3_RX_vect ) { //uart hat ein neues zeichen
   oIDLE( 0 );
   if( !--nrx3 ) {
     if( rxtid3 ) {
-      eRTK_SetReady( txtid3 ); //task hat genug input
+      eRTK_SetReady( rxtid3 ); //task hat genug input
       rxtid3=0;
      }
    }
@@ -217,8 +224,10 @@ ISR( USART3_RX_vect ) { //uart hat ein neues zeichen
 ISR( USART3_UDRE_vect ) {   //uart will naechstes zeichen senden
   oIDLE( 0 );
   if( tx_in3==tx_out3 ) {   //nothing to send
-    if( txtid3 ) eRTK_SetReady( txtid3 ); //set task ready
-    txtid3=0;
+    if( txtid3 ) {
+	  eRTK_SetReady( txtid3 ); //set task ready
+      txtid3=0;
+	 }
     UCSR3B&=~( 1<<UDRIE3 ); //disable TX interrupt
     return;
    }
@@ -354,7 +363,7 @@ void write( tUART port, void * puffer, uint8_t nbytes ) {
             UCSR0B|=( 1<<UDRIE0 ); //sonst sende interrupt wieder einschalten
             txtid0=eRTK_GetTid(); //damit wir nicht aktiv warten
             eRTK_SetSuspended( txtid0 );
-            eRTK_sheduler();
+            //eRTK_sheduler();
            }
          }
         tx_buff0[tx_in0] = *( uint8_t * )puffer++;
@@ -375,7 +384,7 @@ void write( tUART port, void * puffer, uint8_t nbytes ) {
             UCSR1B|=( 1<<UDRIE1 ); //sonst sende interrupt wieder einschalten
             txtid1=eRTK_GetTid(); //damit wir nicht aktiv warten
             eRTK_SetSuspended( txtid1 );
-            eRTK_sheduler();
+            //eRTK_sheduler();
            }
          }
         tx_buff1[tx_in1] = *( uint8_t * )puffer++;
@@ -396,7 +405,7 @@ void write( tUART port, void * puffer, uint8_t nbytes ) {
             UCSR2B|=( 1<<UDRIE2 ); //sonst sende interrupt wieder einschalten
             txtid2=eRTK_GetTid(); //damit wir nicht aktiv warten
             eRTK_SetSuspended( txtid2 );
-            eRTK_sheduler();
+            //eRTK_sheduler();
            }
          }
         tx_buff2[tx_in2] = *( uint8_t * )puffer++;
@@ -417,7 +426,7 @@ void write( tUART port, void * puffer, uint8_t nbytes ) {
             UCSR3B|=( 1<<UDRIE3 ); //sonst sende interrupt wieder einschalten
             txtid3=eRTK_GetTid(); //damit wir nicht aktiv warten
             eRTK_SetSuspended( txtid3 );
-            eRTK_sheduler();
+            //eRTK_sheduler();
            }
          }
         tx_buff3[tx_in3] = *( uint8_t * )puffer++;

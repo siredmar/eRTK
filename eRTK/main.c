@@ -19,21 +19,21 @@ void tskHighPrio( uint16_t param0, void *param1 ) { //prio ist 20
 //und 1 byte, 16 byte == sendepuffergroesse oder 20 byte gesendet und wieder zurueckgelesen
 //also eine sog. loop back gemacht.
 //wird nichts empfangen so gibt es time outs.
-//wird alles empofangen so geht es unverzueglich weiter in der schleife.
+//wird alles empfangen so geht es unverzueglich weiter in der schleife.
 //ist gedacht als belastungstest der taskwechselmechanismen und datenstrukturen.
 void tskUART( uint16_t param0, void *param1 ) { //prio ist 10
   while( 1 ) { //com test
     char buffer[50];
     static uint8_t rec;
-    tUART h=open( UART0+param0 ); //das klappt weil UART0+1=UART2, usw.
+    tUART h=open( UART0+param0 ); //das klappt weil UART0+1=UART1, usw.
     read( h, NULL, 0, 0 ); //clear rx buffer
-    while( h ) { //bei einer loop back verbindung RX mit TX verbunden lauft es ohne time out
-      write( h, "1", 1 );
-      rec=read( h, buffer, 1, 100 );
+    while( h ) { //bei einer loop back verbindung wird RX mit TX verbunden und es laeuft ohne time out
+      write( h, "1", 1 ); //schreibe ein zeichen auf die leitung
+      rec=read( h, buffer, 1, 100 ); //lies ein zeichen mit 100ms time out
       write( h, "abcdef", 6 );
       rec=read( h, buffer, 6, 100 );
-      write( h, "0123456789ABCDEFGHIJ", 20 );
-      rec=read( h, buffer, 20, 100 );
+      write( h, "0123456789ABCDEFGHIJ", 20 ); //hier ist der auszugebende string laenger als der interne puffer, es kommt ein spezieller mechanismus zum tragen, der abwartet bis der sendepuffer leer ist
+      rec=read( h, buffer, 20, 100 ); //hier muss timeout entstehen da der empfangspuffer nur auf 16 zeichen eingestellt ist und wir nicht rechtzeitig auslesen koennen bevor ein overflow entsteht
      }
    }
  }
