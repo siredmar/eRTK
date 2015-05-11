@@ -123,9 +123,9 @@ ISR( USART0_UDRE_vect ) {   //uart will naechstes zeichen senden
   oIDLE( 0 );
   if( tx_in0==tx_out0 ) {   //nothing to send
     if( txtid0 ) {
-	  eRTK_SetReady( txtid0 ); //set task ready
+	    eRTK_SetReady( txtid0 ); //set task ready
       txtid0=0;
-	 }
+	   }
     UCSR0B&=~( 1<<UDRIE0 ); //disable TX interrupt
     return;
    }
@@ -157,9 +157,9 @@ ISR( USART1_UDRE_vect ) {   //uart will naechstes zeichen senden
   oIDLE( 0 );
   if( tx_in1==tx_out1 ) {   //nothing to send
     if( txtid1 ) {
-	  eRTK_SetReady( txtid1 ); //set task ready
+	    eRTK_SetReady( txtid1 ); //set task ready
       txtid1=0;
-	 }
+	   }
     UCSR1B&=~( 1<<UDRIE1 ); //disable TX interrupt
     return;
    }
@@ -191,9 +191,9 @@ ISR( USART2_UDRE_vect ) {   //uart will naechstes zeichen senden
   oIDLE( 0 );
   if( tx_in2==tx_out2 ) {   //nothing to send
     if( txtid2 ) {
-	  eRTK_SetReady( txtid2 ); //set task ready
+	    eRTK_SetReady( txtid2 ); //set task ready
       txtid2=0;
-	 }
+	   }
     UCSR2B&=~( 1<<UDRIE2 ); //disable TX interrupt
     return;
    }
@@ -225,9 +225,9 @@ ISR( USART3_UDRE_vect ) {   //uart will naechstes zeichen senden
   oIDLE( 0 );
   if( tx_in3==tx_out3 ) {   //nothing to send
     if( txtid3 ) {
-	  eRTK_SetReady( txtid3 ); //set task ready
+	    eRTK_SetReady( txtid3 ); //set task ready
       txtid3=0;
-	 }
+	   }
     UCSR3B&=~( 1<<UDRIE3 ); //disable TX interrupt
     return;
    }
@@ -256,9 +256,12 @@ uint8_t read( tUART port, void * puffer, uint8_t nbytes, uint8_t timeout ) {
          }
         else { //auf neue zeichen warten
           if( timeout ) { //wenn ein timeout angegeben wurde
-            rxtid0=eRTK_GetTid();
-            nrx0=nbytes-anz;
-            eRTK_wefet( timeout );
+            ATOMIC_BLOCK( ATOMIC_RESTORESTATE ) {
+              rxtid0=eRTK_GetTid();
+              nrx0=nbytes-anz;
+              eRTK_wefet( timeout );
+              rxtid0=0;
+             }
             timeout=0;
            }
           else break;
@@ -282,9 +285,12 @@ uint8_t read( tUART port, void * puffer, uint8_t nbytes, uint8_t timeout ) {
          }
         else { //auf neue zeichen warten
           if( timeout ) { //wenn ein timeout angegeben wurde
-            rxtid1=eRTK_GetTid();
-            nrx1=nbytes-anz;
-            eRTK_wefet( timeout );
+            ATOMIC_BLOCK( ATOMIC_RESTORESTATE ) {
+              rxtid1=eRTK_GetTid();
+              nrx1=nbytes-anz;
+              eRTK_wefet( timeout );
+              rxtid1=0;
+             }
             timeout=0;
            }
           else break;
@@ -308,9 +314,12 @@ uint8_t read( tUART port, void * puffer, uint8_t nbytes, uint8_t timeout ) {
          }
         else { //auf neue zeichen warten
           if( timeout ) { //wenn ein timeout angegeben wurde
-            rxtid2=eRTK_GetTid();
-            nrx2=nbytes-anz;
-            eRTK_wefet( timeout );
+            ATOMIC_BLOCK( ATOMIC_RESTORESTATE ) {
+              rxtid2=eRTK_GetTid();
+              nrx2=nbytes-anz;
+              eRTK_wefet( timeout );
+              rxtid2=0;
+             }
             timeout=0;
            }
           else break;
@@ -334,9 +343,12 @@ uint8_t read( tUART port, void * puffer, uint8_t nbytes, uint8_t timeout ) {
          }
         else { //auf neue zeichen warten
           if( timeout ) { //wenn ein timeout angegeben wurde
-            rxtid3=eRTK_GetTid();
-            nrx3=nbytes-anz;
-            eRTK_wefet( timeout );
+            ATOMIC_BLOCK( ATOMIC_RESTORESTATE ) {
+              rxtid3=eRTK_GetTid();
+              nrx3=nbytes-anz;
+              eRTK_wefet( timeout );
+              rxtid3=0;
+             }
             timeout=0;
            }
           else break;
@@ -363,7 +375,7 @@ void write( tUART port, void * puffer, uint8_t nbytes ) {
             UCSR0B|=( 1<<UDRIE0 ); //sonst sende interrupt wieder einschalten
             txtid0=eRTK_GetTid(); //damit wir nicht aktiv warten
             eRTK_SetSuspended( txtid0 );
-            //eRTK_sheduler();
+            eRTK_sheduler();
            }
          }
         tx_buff0[tx_in0] = *( uint8_t * )puffer++;
@@ -384,7 +396,7 @@ void write( tUART port, void * puffer, uint8_t nbytes ) {
             UCSR1B|=( 1<<UDRIE1 ); //sonst sende interrupt wieder einschalten
             txtid1=eRTK_GetTid(); //damit wir nicht aktiv warten
             eRTK_SetSuspended( txtid1 );
-            //eRTK_sheduler();
+            eRTK_sheduler();
            }
          }
         tx_buff1[tx_in1] = *( uint8_t * )puffer++;
@@ -405,7 +417,7 @@ void write( tUART port, void * puffer, uint8_t nbytes ) {
             UCSR2B|=( 1<<UDRIE2 ); //sonst sende interrupt wieder einschalten
             txtid2=eRTK_GetTid(); //damit wir nicht aktiv warten
             eRTK_SetSuspended( txtid2 );
-            //eRTK_sheduler();
+            eRTK_sheduler();
            }
          }
         tx_buff2[tx_in2] = *( uint8_t * )puffer++;
@@ -426,7 +438,7 @@ void write( tUART port, void * puffer, uint8_t nbytes ) {
             UCSR3B|=( 1<<UDRIE3 ); //sonst sende interrupt wieder einschalten
             txtid3=eRTK_GetTid(); //damit wir nicht aktiv warten
             eRTK_SetSuspended( txtid3 );
-            //eRTK_sheduler();
+            eRTK_sheduler();
            }
          }
         tx_buff3[tx_in3] = *( uint8_t * )puffer++;

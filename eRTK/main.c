@@ -26,14 +26,14 @@ void tskUART( uint16_t param0, void *param1 ) { //prio ist 10
     char buffer[50];
     static uint8_t rec;
     tUART h=open( UART0+param0 ); //das klappt weil UART0+1=UART1, usw.
-    read( h, NULL, 0, 0 ); //clear rx buffer
     while( h ) { //bei einer loop back verbindung wird RX mit TX verbunden und es laeuft ohne time out
+      read( h, NULL, 0, 0 ); //clear rx buffer
       write( h, "1", 1 ); //schreibe ein zeichen auf die leitung
       rec=read( h, buffer, 1, 100 ); //lies ein zeichen mit 100ms time out
       write( h, "abcdef", 6 );
       rec=read( h, buffer, 6, 100 );
       write( h, "0123456789ABCDEFGHIJ", 20 ); //hier ist der auszugebende string laenger als der interne puffer, es kommt ein spezieller mechanismus zum tragen, der abwartet bis der sendepuffer leer ist
-      rec=read( h, buffer, 20, 100 ); //hier muss timeout entstehen da der empfangspuffer nur auf 16 zeichen eingestellt ist und wir nicht rechtzeitig auslesen koennen bevor ein overflow entsteht
+      rec=read( h, buffer, 16, 100 ); //hier muss timeout entstehen da der empfangspuffer nur auf 16 zeichen eingestellt ist und wir nicht rechtzeitig auslesen koennen bevor ein overflow entsteht
      }
    }
  }
