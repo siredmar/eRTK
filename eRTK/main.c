@@ -4,6 +4,39 @@
  * Created: 04.05.2015 07:54:15
  *  Author: er
  */ 
+
+/*
+  Dies ist ein Beispiel der Anwendung und ein Test des Betriebssystems.
+  Es werden 5 Tasks definiert, eine mit hoher Prioritaet und 4 mit niedrigerer Prioritaet.
+  Die Task mit hoher Prio macht nichts anderes als zyklisch alle 10ms wieder zu starten, 
+  in der Zwischenzeit suspendiert sie sich.
+  Wenn man damit z.B. einen Portpin toggelt kann man den Jitter des erreichbaren Echtzeitverhaltens prüfen.
+  Es sollten weniger als etwa 100 CPU Zyklen also bei 16MHz Takt 100/16 us Jitter erreichbar sein.
+  Die anderen 4 Tasks nutzen den selben Code (code sharing) lediglich eine Variable indiziert die Instanz der Task
+  welche aktuell laeuft, dies wird gleichzeitig in den Datenfeldern als Index genutzt.
+  Initial wird ueber den Startparameter param0 dieser Index uebergeben.
+  Zusammengefasst: 
+    tskHighPrio wird alle 10ms kurz aktiv und beendet sich gleich wieder.   
+	tskUART startet viermal, jede Instanz nimmt sich einen seriellen Port (UART)
+	und sendet 1..n Zeichen, wenn eine Verbindung Rx<->Tx existiert wird auch etwas empfangen.
+	Ansonsten entstehen time outs beim Warten auf die Zeichen.
+	Diese Prozesse bestehen aus kurzen Phasen von CPU Aktivitaet und relativ langen Wartezeiten auf die Peripherie.
+	Wenn das alles abgearbeitet ist wird die restliche CPU Zeit in der Idle Task verbracht.
+	Hier kommen die perfcounter ins Spiel.
+	Die Idle Task enthaelt eine Anzeige fuer die CPU Restzeit, 
+	also wieviel Anteil die Summe aller Tasks von der verfügbaren Rechenzeit nimmt.
+	Im Leerlauf  -> 1000
+	Bei 50% Last ->  500
+	Überlast     ->    0
+	
+	Mit diesem Beispiel erreiche ich um 930 Zaehler, also etwa 7% der Zeit ist die CPU in den Tasks unterwegs, 
+	der Rest ist Leerlauf.
+	Das bei einer Interruptbelastung von 1000Hz vom Systemtimer und 8 seriellen Sende- und Empfangsinterrupts
+	mit jeweils 2000Hz bei 19200Bd und 3x1000Hz bei 9600Bd ein gutes Ergebnis !
+	
+	14.05.2005  T. Erdmann t-erdmann@web.de 
+*/
+
 #include <avr/io.h>
 #include "eRTK.h"
 #include "uart.h"
@@ -24,7 +57,7 @@ void tskHighPrio( uint16_t param0, void *param1 ) { //prio ist 20
 void tskUART( uint16_t param0, void *param1 ) { //prio ist 10
   while( 1 ) { //com test
     char buffer[50];
-    static uint8_t rec;
+    uint8_t rec;
     tUART h=open( UART0+param0 ); //das klappt weil UART0+1=UART1, usw.
     while( h ) { //bei einer loop back verbindung wird RX mit TX verbunden und es laeuft ohne time out
       read( h, NULL, 0, 0 ); //clear rx buffer

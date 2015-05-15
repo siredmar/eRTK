@@ -78,7 +78,6 @@ void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
 
 
 __attribute__ ((noinline)) void deadbeef( tsys reason ) {
-  //static tsys m_reason=reason;
   while( 1 );
  }
 

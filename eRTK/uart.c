@@ -103,10 +103,12 @@ tUART open( tUART port ) {
 #ifdef UART0_BAUD
 ISR( USART0_RX_vect ) { //uart hat ein neues zeichen
   oIDLE( 0 );
-  if( !--nrx0 ) {
-    if( rxtid0 ) {
-      eRTK_SetReady( rxtid0 ); //task hat genug input
-      rxtid0=0;
+  if( nrx0 ) { //es soll ein event erzeugt werden nach nrx0 zeichen
+    if( !--nrx0 ) {
+      if( rxtid0 ) {
+        eRTK_SetReady( rxtid0 ); //task hat genug input
+        rxtid0=0;
+       }
      }
    }
   uint8_t i = rx_in0;
@@ -123,9 +125,9 @@ ISR( USART0_UDRE_vect ) {   //uart will naechstes zeichen senden
   oIDLE( 0 );
   if( tx_in0==tx_out0 ) {   //nothing to send
     if( txtid0 ) {
-	    eRTK_SetReady( txtid0 ); //set task ready
+      eRTK_SetReady( txtid0 ); //set task ready
       txtid0=0;
-	   }
+     }
     UCSR0B&=~( 1<<UDRIE0 ); //disable TX interrupt
     return;
    }
@@ -137,10 +139,12 @@ ISR( USART0_UDRE_vect ) {   //uart will naechstes zeichen senden
 #ifdef UART1_BAUD
 ISR( USART1_RX_vect ) { //uart hat ein neues zeichen
   oIDLE( 0 );
-  if( !--nrx1 ) {
-    if( rxtid1 ) {
-      eRTK_SetReady( rxtid1 ); //task hat genug input
-      rxtid1=0;
+  if( nrx1 ) { //es soll ein event erzeugt werden nach nrx1 zeichen
+    if( !--nrx1 ) {
+      if( rxtid1 ) {
+        eRTK_SetReady( rxtid1 ); //task hat genug input
+        rxtid1=0;
+       }
      }
    }
   uint8_t i = rx_in1;
@@ -157,9 +161,9 @@ ISR( USART1_UDRE_vect ) {   //uart will naechstes zeichen senden
   oIDLE( 0 );
   if( tx_in1==tx_out1 ) {   //nothing to send
     if( txtid1 ) {
-	    eRTK_SetReady( txtid1 ); //set task ready
+      eRTK_SetReady( txtid1 ); //set task ready
       txtid1=0;
-	   }
+     }
     UCSR1B&=~( 1<<UDRIE1 ); //disable TX interrupt
     return;
    }
@@ -171,10 +175,12 @@ ISR( USART1_UDRE_vect ) {   //uart will naechstes zeichen senden
 #ifdef UART2_BAUD
 ISR( USART2_RX_vect ) { //uart hat ein neues zeichen
   oIDLE( 0 );
-  if( !--nrx2 ) {
-    if( rxtid2 ) {
-      eRTK_SetReady( rxtid2 ); //task hat genug input
-      rxtid2=0;
+  if( nrx2 ) { //es soll ein event erzeugt werden nach nrx2 zeichen
+    if( !--nrx2 ) {
+      if( rxtid2 ) {
+        eRTK_SetReady( rxtid2 ); //task hat genug input
+        rxtid2=0;
+	   }
      }
    }
   uint8_t i = rx_in2;
@@ -191,9 +197,9 @@ ISR( USART2_UDRE_vect ) {   //uart will naechstes zeichen senden
   oIDLE( 0 );
   if( tx_in2==tx_out2 ) {   //nothing to send
     if( txtid2 ) {
-	    eRTK_SetReady( txtid2 ); //set task ready
+      eRTK_SetReady( txtid2 ); //set task ready
       txtid2=0;
-	   }
+     }
     UCSR2B&=~( 1<<UDRIE2 ); //disable TX interrupt
     return;
    }
@@ -205,10 +211,12 @@ ISR( USART2_UDRE_vect ) {   //uart will naechstes zeichen senden
 #ifdef UART3_BAUD
 ISR( USART3_RX_vect ) { //uart hat ein neues zeichen
   oIDLE( 0 );
-  if( !--nrx3 ) {
-    if( rxtid3 ) {
-      eRTK_SetReady( rxtid3 ); //task hat genug input
-      rxtid3=0;
+  if( nrx3 ) { //es soll ein event erzeugt werden nach nrx3 zeichen
+    if( !--nrx3 ) {
+      if( rxtid3 ) {
+        eRTK_SetReady( rxtid3 ); //task hat genug input
+        rxtid3=0;
+	   }
      }
    }
   uint8_t i = rx_in3;
@@ -225,9 +233,9 @@ ISR( USART3_UDRE_vect ) {   //uart will naechstes zeichen senden
   oIDLE( 0 );
   if( tx_in3==tx_out3 ) {   //nothing to send
     if( txtid3 ) {
-	    eRTK_SetReady( txtid3 ); //set task ready
+      eRTK_SetReady( txtid3 ); //set task ready
       txtid3=0;
-	   }
+     }
     UCSR3B&=~( 1<<UDRIE3 ); //disable TX interrupt
     return;
    }
