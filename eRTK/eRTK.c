@@ -10,8 +10,8 @@
 #include <stdio.h>
 #include <avr/sleep.h>
 #include <avr/wdt.h>
-#include <util/atomic.h>
 #include "eRTK.h"
+#include "adc.h"
 
 #ifdef ERTKDEBUG
 uint8_t stack[VANZTASK+1][ERTK_STACKSIZE]  __attribute__ ((aligned (256)));  /* Jede Task hat Stack a' STACKSIZE Byte */
@@ -19,17 +19,17 @@ uint8_t stack[VANZTASK+1][ERTK_STACKSIZE]  __attribute__ ((aligned (256)));  /* 
 uint8_t stack[VANZTASK+1][ERTK_STACKSIZE];  /* Jede Task hat Stack a' STACKSIZE Byte */
 #endif
 
-void * stackptr[VANZTASK+1];  /* Ablage fuer Stackpointer der Tasks */
+void * stackptr[VANZTASK+1]; /* Ablage fuer Stackpointer der Tasks */
 
-volatile uint8_t akttask;   /* Nummer der aktuellen Task, 0=idle */
+volatile uint8_t akttask;    /* Nummer der aktuellen Task, 0=idle */
 
 /* struktur task control block */
-typedef struct s_tcd { /* queue mit ordnungskriterium task prioritaet 255..0 */
-  struct s_tcd * pnext;       /* 1. element immer verkettungszeiger !!! */
-  struct s_tcd * pbefore;     /* vorgaenger in liste */
-  uint8_t tid;          /* index aus der reihenfolge der statischen deklaration */
-  uint8_t prio;         /* 0..255 */
-  uint8_t timer;        //timeout counter mit system tick aufloesung
+typedef struct s_tcd {    /* queue mit ordnungskriterium task prioritaet 255..0 */
+  struct s_tcd * pnext;   /* 1. element immer verkettungszeiger !!! */
+  struct s_tcd * pbefore; /* vorgaenger in liste */
+  uint8_t tid;            /* index aus der reihenfolge der statischen deklaration */
+  uint8_t prio;           /* 0..255 */
+  uint8_t timer;          /* timeout counter mit system tick aufloesung */
 #ifdef ERTK_DEBUG
   uint16_t param0;
   void * param1;
@@ -37,7 +37,7 @@ typedef struct s_tcd { /* queue mit ordnungskriterium task prioritaet 255..0 */
  } s_tcd;
 s_tcd tcd[VANZTASK+1];    /* indizierung ueber task index */
 
-s_tcd * pTaskRdy;      /* einfache verkettung aller ready tasks ueber tcd.next in reihenfolge der prioritaet */
+s_tcd * pTaskRdy;         /* einfache verkettung aller ready tasks ueber tcd.next in reihenfolge der prioritaet */
 
 /*
   die perfcounter: 
@@ -112,7 +112,7 @@ void * pp_stack; //speicher f�r stackpointer w�hrend push/pop
   ); \
  }
 
-void __attribute__ ((naked)) eRTK_sheduler( void ) { /* start der hoechstprioren ready task, notfalls idle */
+void __attribute__ ((naked)) eRTK_scheduler( void ) { /* start der hoechstprioren ready task, notfalls idle */
   push();
   stackptr[akttask]=pp_stack;
   //
@@ -272,7 +272,7 @@ void eRTK_wefet( uint8_t timeout ) {
       if( tcd[akttask].timer ) deadbeef( SYS_UNKNOWN );
       tcd[akttask].timer=timeout;
       eRTK_SetSuspended( akttask );
-      eRTK_sheduler();
+      eRTK_scheduler();
      }
    }
  }
@@ -494,7 +494,7 @@ __inline__ void __attribute__ ( ( always_inline ) ) eRTK_timertick( void ) { //d
     else eRTK_cnt_overload=0;
     eRTK_perfcount=0;
    }
-  if( eRTK_up ) eRTK_sheduler();
+  if( eRTK_up ) eRTK_scheduler();
  }
 
 
@@ -502,6 +502,7 @@ __inline__ void __attribute__ ( ( always_inline ) ) eRTK_timertick( void ) { //d
 ISR( TIMER0_OVF_vect ) { //1kHz timer
   TCNT0=( uint8_t )( -1*TIMERPRELOAD );
   eRTK_timertick();
+  adc_sequencer();
  }
 
 static void timer0_init( void ) {

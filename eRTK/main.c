@@ -38,12 +38,16 @@
 */
 
 #include <avr/io.h>
+#include <stdio.h>
 #include "eRTK.h"
 #include "uart.h"
+#include "adc.h"
 
 void tskHighPrio( uint16_t param0, void *param1 ) { //prio ist 20
   while( 1 ) { //kurze aktivitaet auf prio 20 muss alles auf prio 10 sofort unterbrechen
     eRTK_Sleep_ms( 10 );
+    static char txt[10];
+    snprintf( txt, sizeof txt, "%u", adc_get( 8 ) );
    }
  }
 
@@ -83,5 +87,6 @@ const t_eRTK_tcb rom_tcb[VANZTASK]={
 int main( void ) {
   eRTK_init();
   eRTK_timer_init();
+  adc_init();
   eRTK_go();
  }

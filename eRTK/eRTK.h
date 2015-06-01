@@ -6,6 +6,8 @@
  */ 
 #include <avr/io.h>
 #include <stddef.h>
+#include <util/atomic.h>
+#include <avr/interrupt.h>
 
 #ifndef ERTK_H_
 #define ERTK_H_
@@ -48,6 +50,7 @@
 typedef enum { SYS_NOTASK, SYS_NULLPTR, SYS_NULLTIMER, SYS_OVERLOAD, SYS_VERIFY, SYS_UNKNOWN } tsys; 
 void deadbeef( tsys reason );          //allgemeine fehler routine
 
+void __attribute__ ((naked)) eRTK_scheduler( void ); /* start der hoechstprioren ready task, notfalls idle */
 uint8_t eRTK_GetTimer8( void );        //systemzeit 1000Hz in 8 Bit
 uint16_t eRTK_GetTimer16( void );      //systemzeit 1000Hz in 16 Bit
 uint8_t eRTK_GetTid( void );           //holen der eigenen task id

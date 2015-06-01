@@ -383,7 +383,7 @@ void write( tUART port, void * puffer, uint8_t nbytes ) {
             UCSR0B|=( 1<<UDRIE0 ); //sonst sende interrupt wieder einschalten
             txtid0=eRTK_GetTid(); //damit wir nicht aktiv warten
             eRTK_SetSuspended( txtid0 );
-            eRTK_sheduler();
+            eRTK_scheduler();
            }
          }
         tx_buff0[tx_in0] = *( uint8_t * )puffer++;
@@ -404,7 +404,7 @@ void write( tUART port, void * puffer, uint8_t nbytes ) {
             UCSR1B|=( 1<<UDRIE1 ); //sonst sende interrupt wieder einschalten
             txtid1=eRTK_GetTid(); //damit wir nicht aktiv warten
             eRTK_SetSuspended( txtid1 );
-            eRTK_sheduler();
+            eRTK_scheduler();
            }
          }
         tx_buff1[tx_in1] = *( uint8_t * )puffer++;
@@ -425,7 +425,7 @@ void write( tUART port, void * puffer, uint8_t nbytes ) {
             UCSR2B|=( 1<<UDRIE2 ); //sonst sende interrupt wieder einschalten
             txtid2=eRTK_GetTid(); //damit wir nicht aktiv warten
             eRTK_SetSuspended( txtid2 );
-            eRTK_sheduler();
+            eRTK_scheduler();
            }
          }
         tx_buff2[tx_in2] = *( uint8_t * )puffer++;
@@ -446,7 +446,7 @@ void write( tUART port, void * puffer, uint8_t nbytes ) {
             UCSR3B|=( 1<<UDRIE3 ); //sonst sende interrupt wieder einschalten
             txtid3=eRTK_GetTid(); //damit wir nicht aktiv warten
             eRTK_SetSuspended( txtid3 );
-            eRTK_sheduler();
+            eRTK_scheduler();
            }
          }
         tx_buff3[tx_in3] = *( uint8_t * )puffer++;
