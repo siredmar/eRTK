@@ -12,7 +12,7 @@
 #ifndef ERTK_H_
 #define ERTK_H_
 
-#define VANZTASK 5                     //anzahl definierter prozesse
+#define VANZTASK             6         //anzahl definierter prozesse
 
 #define F_CPU       16000000ul
 

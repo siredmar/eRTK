@@ -46,8 +46,6 @@
 void tskHighPrio( uint16_t param0, void *param1 ) { //prio ist 20
   while( 1 ) { //kurze aktivitaet auf prio 20 muss alles auf prio 10 sofort unterbrechen
     eRTK_Sleep_ms( 10 );
-    static char txt[10];
-    snprintf( txt, sizeof txt, "%u", adc_get( 8 ) );
    }
  }
 
@@ -75,6 +73,13 @@ void tskUART( uint16_t param0, void *param1 ) { //prio ist 10
    }
  }
 
+void tskADC( uint16_t param0, void *param1 ) { //prio ist 15
+  while( 1 ) { //task wartet bis neue adc messung vorliegt, kanal 0 hat teiler 10 -> 1000/10=100ms datenrate
+    static char txt[10];
+    snprintf( txt, sizeof txt, "%u", adc_wait( 0 ) );
+   }
+ }
+
 const t_eRTK_tcb rom_tcb[VANZTASK]={
   //tid    adresse    prio  p0 p1
   /*1*/  { tskUART,     10, 0, "UART1" },
@@ -82,6 +87,7 @@ const t_eRTK_tcb rom_tcb[VANZTASK]={
   /*3*/  { tskUART,     10, 2, "UART3" },
   /*4*/  { tskUART,     10, 3, "UART4" },
   /*5*/  { tskHighPrio, 20, 1, "highp" },
+  /*6*/  { tskADC,      15, 0, "adc"   }
  };
 
 int main( void ) {

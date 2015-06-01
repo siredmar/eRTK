@@ -104,6 +104,13 @@ uint8_t adc_sequencer( void ) { //soll im system timer interrupt aufgerufen werd
   else return 0;
  }
 
+void adc_init( void ) { //beim hochlauf aufzurufen
+  ADMUX = 0;  //Kanal waehlen 0-7
+  ADMUX |= /*(1<<REFS1) |*/ (1<<REFS0); // avcc Referenzspannung nutzen
+  ADCSRA = (1<<ADIE)|(1<<ADEN)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0); //Frequenzvorteiler setzen auf /16 und ADC aktivieren
+ }
+#endif
+
 uint16_t adc_get( uint8_t mux ) { //holen des aktuellen wandlungswertes
   uint16_t val=-1;
   for( register uint8_t n=0; n<ANZ_ADC; n++ ) {
@@ -116,9 +123,19 @@ uint16_t adc_get( uint8_t mux ) { //holen des aktuellen wandlungswertes
   return val;
  }
 
-void adc_init( void ) { //beim hochlauf aufzurufen
-  ADMUX = 0;  //Kanal waehlen 0-7
-  ADMUX |= /*(1<<REFS1) |*/ (1<<REFS0); // avcc Referenzspannung nutzen
-  ADCSRA = (1<<ADIE)|(1<<ADEN)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0); //Frequenzvorteiler setzen auf /16 und ADC aktivieren
+uint16_t adc_wait( uint8_t mux ) { //warten bis auf diesem kanal eine neue messung vorliegt und dann liefern
+  for( register uint8_t n=0; n<ANZ_ADC; n++ ) {
+    if( adc_cntrl[n].mux==mux ) { //dieser kanal
+      uint8_t tid=eRTK_GetTid();
+      ATOMIC_BLOCK( ATOMIC_RESTORESTATE ) {
+        adc_cntrl[n].tid=tid;
+        eRTK_SetSuspended( tid );
+        eRTK_scheduler();
+       }
+      return adc_get( mux );
+     }
+   }
+  deadbeef( SYS_UNKNOWN );
+  return 0;
  }
-#endif
+
