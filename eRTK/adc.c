@@ -50,6 +50,32 @@ tadu adc_cntrl[]={
    }
  };
 
+/*
+messzeitpunkte bei verschiedenen scaler einstellungen und anzahl messungen pro zeitpunkt:
+
+time[ms]  scaler=1  scaler=2    scaler=3  scaler=4  scaler=5  scaler=6  scaler=7  scaler=8  scaler=9  scaler=10  cnt  gesamtdauer
+0         1         0           0         0         0         0         0         0         0         0           1     104us
+1         1         1           0         0         0         0         0         0         0         0           2     208us
+2         1         0           1         0         0         0         0         0         0         0           2     208us
+3         1         1           0         1         0         0         0         0         0         0           3     312us
+4         1         0           0         0         1         0         0         0         0         0           2     208us
+5         1         1           1         0         0         1         0         0         0         0           4     416us
+6         1         0           0         0         0         0         1         0         0         0           2     208us
+7         1         1           0         1         0         0         0         1         0         0           4     416us
+8         1         0           1         0         0         0         0         0         1         0           3     312us
+9         1         1           0         0         1         0         0         0         0         1           4     416us
+10        1         0           0         0         0         0         0         0         0         0           1     104us
+11        1         1           1         1         0         1         0         0         0         0           5     520us
+12        1         0           0         0         0         0         0         0         0         0           1     104us
+13        1         1           0         0         0         0         1         0         0         0           3     312us
+14        1         0           1         0         1         0         0         0         0         0           3     312us
+15        1         1           0         1         0         0         0         1         0         0           4     416us
+16        1         0           0         0         0         0         0         0         0         0           1     104us
+17        1         1           1         0         0         1         0         0         1         0           5     520us
+18        1         0           0         0         0         0         0         0         0         0           1     104us
+19        1         1           0         1         1         0         0         0         0         1           5     520us
+*/
+
 #define ANZ_ADC ( sizeof adc_cntrl / sizeof adc_cntrl[0] )
 
 static uint8_t adc_index;          //aktueller adc kanal
@@ -107,7 +133,7 @@ uint8_t adc_sequencer( void ) { //soll im system timer interrupt aufgerufen werd
 void adc_init( void ) { //beim hochlauf aufzurufen
   ADMUX = 0;  //Kanal waehlen 0-7
   ADMUX |= /*(1<<REFS1) |*/ (1<<REFS0); // avcc Referenzspannung nutzen
-  ADCSRA = (1<<ADIE)|(1<<ADEN)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0); //Frequenzvorteiler setzen auf /16 und ADC aktivieren
+  ADCSRA = (1<<ADIE)|(1<<ADEN)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0); //Frequenzvorteiler setzen auf %128, ADC aktivieren, int aktivieren
  }
 #endif
 

@@ -126,12 +126,12 @@ void __attribute__ ((naked)) eRTK_scheduler( void ) { /* start der hoechstpriore
     if( p ) { //task stand noch in der ready liste
       //teste pri des nachfolgers
       if( p->pnext!=NULL ) { //wenn es nachfolger gibt
-         if( p->prio == p->pnext->prio ) { //schalte weiter wenn nachfolger prio genauso ist
-           akttask=p->pnext->tid;
-          }
-         else {
-           akttask=pTaskRdy->tid;
-          }
+        if( p->prio == p->pnext->prio ) { //schalte weiter wenn nachfolger prio genauso ist
+          akttask=p->pnext->tid;
+         }
+        else {
+          akttask=pTaskRdy->tid;
+         }
        }
       else { //sonst nimm den ersten in der liste, der muss per definition die gleiche prio haben da wir bei kleineren prios gar nicht suchen !
         akttask=pTaskRdy->tid;
