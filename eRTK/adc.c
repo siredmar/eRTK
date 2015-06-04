@@ -36,10 +36,11 @@ typedef struct {
   uint8_t cnt;       //aufwaertszaehler
   uint16_t value;    //adc messwert
   uint8_t tid;       //wenn eine task gestartet werden soll
- } tadu;
+ } tadc;
+
 
 //sequenzer liste mit adc mux selektor und scaler fuer die messrate
-tadu adc_cntrl[]={
+tadc adc_cntrl[]={
   { .mux=0, 
     .ref=( 1<<REFS0 ),
     .scaler=10  //bei jedem 10ten lauf messen
@@ -78,16 +79,17 @@ time[ms]  scaler=1  scaler=2    scaler=3  scaler=4  scaler=5  scaler=6  scaler=7
 
 #define ANZ_ADC ( sizeof adc_cntrl / sizeof adc_cntrl[0] )
 
-static uint8_t adc_index;          //aktueller adc kanal
+static uint8_t adc_index;  //aktuell wandelnder adc kanal
 
 #if defined (__AVR_ATmega2560__)
 ISR( ADC_vect ) { //adc interrupt
   uint8_t m_ready=0;
+  register tadc * padc=&adc_cntrl[adc_index];
   if( adc_index<ANZ_ADC ) {
-    adc_cntrl[adc_index].value=ADCW;
-    if( adc_cntrl[adc_index].tid ) { //falls ein task suspendiert wartet
+    padc->value=ADCW;
+    if( padc->tid ) { //falls ein task suspendiert wartet
       m_ready=1; 
-      eRTK_SetReady( adc_cntrl[adc_index].tid ); //dann aktivieren 
+      eRTK_SetReady( padc->tid ); //dann aktivieren 
      }
     //weiterschalten bis zum naechsten bereiten block oder ende der liste
     while( 1 ) {
@@ -96,10 +98,11 @@ ISR( ADC_vect ) { //adc interrupt
         break;
        }
       else {
-        if( ++adc_cntrl[adc_index].cnt>=adc_cntrl[adc_index].scaler ) { //adc kanal starten
-          adc_cntrl[adc_index].cnt=0;
-          ADMUX=( adc_cntrl[adc_index].mux&0x07 ) | adc_cntrl[adc_index].ref; 
-          if( adc_cntrl[adc_index].mux<=7 ) ADCSRB&=~( 1<<MUX5 );
+        ++padc;
+        if( ++( padc->cnt ) >= padc->scaler ) { //adc kanal starten
+          padc->cnt=0;
+          ADMUX=( padc->mux&0x07 ) | padc->ref; 
+          if( padc->mux<=7 ) ADCSRB&=~( 1<<MUX5 );
           else ADCSRB|=( 1<<MUX5 );
           ADCSRA|=( 1<<ADSC );
           break;
@@ -113,17 +116,18 @@ ISR( ADC_vect ) { //adc interrupt
 
 uint8_t adc_sequencer( void ) { //soll im system timer interrupt aufgerufen werden
   if( !adc_index ) {
+    register tadc * padc=adc_cntrl;
     //finde startklaren adc kanal
-    while( adc_index<ANZ_ADC ) {
-      if( ++adc_cntrl[adc_index].cnt>=adc_cntrl[adc_index].scaler ) { //adc kanal starten
-        adc_cntrl[adc_index].cnt=0;
-        ADMUX=( adc_cntrl[adc_index].mux&0x07 ) | adc_cntrl[adc_index].ref;
-        if( adc_cntrl[adc_index].mux<=7 ) ADCSRB&=~( 1<<MUX5 );
+    while( padc<&adc_cntrl[ANZ_ADC] ) {
+      if( ++( padc->cnt ) >= padc->scaler ) { //adc kanal starten
+        padc->cnt=0;
+        ADMUX=( padc->mux&0x07 ) | padc->ref;
+        if( padc->mux<=7 ) ADCSRB&=~( 1<<MUX5 );
         else ADCSRB|=( 1<<MUX5 );
         ADCSRA|=( 1<<ADSC );
         break;
        }
-      ++adc_index;
+      ++padc;
      }
     return !0;
    }
@@ -139,27 +143,31 @@ void adc_init( void ) { //beim hochlauf aufzurufen
 
 uint16_t adc_get( uint8_t mux ) { //holen des aktuellen wandlungswertes
   uint16_t val=-1;
-  for( register uint8_t n=0; n<ANZ_ADC; n++ ) {
-    if( adc_cntrl[n].mux==mux ) {
+  register tadc * padc=adc_cntrl;
+  while( padc<adc_cntrl+ANZ_ADC ) {
+    if( padc->mux==mux ) {
       ATOMIC_BLOCK( ATOMIC_RESTORESTATE	) {
-        val=adc_cntrl[n].value;
+        val=padc->value;
        }
      }
+    ++padc;
    }
   return val;
  }
 
 uint16_t adc_wait( uint8_t mux ) { //warten bis auf diesem kanal eine neue messung vorliegt und dann liefern
-  for( register uint8_t n=0; n<ANZ_ADC; n++ ) {
-    if( adc_cntrl[n].mux==mux ) { //dieser kanal
+  register tadc * padc=adc_cntrl;
+  while( padc<adc_cntrl+ANZ_ADC ) {
+    if( padc->mux==mux ) { //dieser kanal
       uint8_t tid=eRTK_GetTid();
       ATOMIC_BLOCK( ATOMIC_RESTORESTATE ) {
-        adc_cntrl[n].tid=tid;
+        padc->tid=tid;
         eRTK_SetSuspended( tid );
         eRTK_scheduler();
        }
       return adc_get( mux );
      }
+    ++padc;
    }
   deadbeef( SYS_UNKNOWN );
   return 0;
