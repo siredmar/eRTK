@@ -73,10 +73,17 @@ void tskUART( uint16_t param0, void *param1 ) { //prio ist 10
    }
  }
 
+//sequenzer liste mit adc mux selektor und scaler fuer die messrate
+tadc adc_cntrl[ANZ_ADC]={
+  { .mux=0, .ref=( 1<<REFS0 ), .scaler=10 }, //bei jedem 10ten lauf messen
+  { .mux=8, .ref=( 1<<REFS0 ), .scaler=1  }  //bei jedem lauf messen
+ };
+
 void tskADC( uint16_t param0, void *param1 ) { //prio ist 15
   while( 1 ) { //task wartet bis neue adc messung vorliegt, kanal 0 hat teiler 10 -> 1000/10=100ms datenrate
     static char txt[10];
     snprintf( txt, sizeof txt, "%u", adc_wait( 0 ) );
+    eRTK_Sleep_ms( 10 );
    }
  }
 

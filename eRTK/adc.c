@@ -5,6 +5,7 @@
  *  Author: er
  */ 
 #include "eRTK.h"
+#include "adc.h"
 
 /*
   Der ADC wird von einer Sequencer Liste gesteuert.
@@ -29,27 +30,7 @@
 
 */
 
-typedef struct {
-  uint8_t mux;       //0..15 beim atmega256x
-  uint8_t ref;       //wert fuer referenz 
-  uint8_t scaler;    //0=nie, 1=jeden lauf, 2=jeden 2ten lauf, usw
-  uint8_t cnt;       //aufwaertszaehler
-  uint16_t value;    //adc messwert
-  uint8_t tid;       //wenn eine task gestartet werden soll
- } tadc;
 
-
-//sequenzer liste mit adc mux selektor und scaler fuer die messrate
-tadc adc_cntrl[]={
-  { .mux=0, 
-    .ref=( 1<<REFS0 ),
-    .scaler=10  //bei jedem 10ten lauf messen
-   },
-  { .mux=8,
-    .ref=( 1<<REFS0 ),
-    .scaler=1   //bei jedem lauf messen
-   }
- };
 
 /*
 messzeitpunkte bei verschiedenen scaler einstellungen und anzahl messungen pro zeitpunkt:
@@ -77,32 +58,29 @@ time[ms]  scaler=1  scaler=2    scaler=3  scaler=4  scaler=5  scaler=6  scaler=7
 19        1         1           0         1         1         0         0         0         0         1           5     520us
 */
 
-#define ANZ_ADC ( sizeof adc_cntrl / sizeof adc_cntrl[0] )
-
-static uint8_t adc_index;  //aktuell wandelnder adc kanal
+static tadc * padc_active;  //aktuell wandelnder adc kanal
 
 #if defined (__AVR_ATmega2560__)
 ISR( ADC_vect ) { //adc interrupt
   uint8_t m_ready=0;
-  register tadc * padc=&adc_cntrl[adc_index];
-  if( adc_index<ANZ_ADC ) {
-    padc->value=ADCW;
-    if( padc->tid ) { //falls ein task suspendiert wartet
+  if( padc_active<adc_cntrl+ANZ_ADC ) {
+    padc_active->value=ADCW;
+    if( padc_active->tid ) { //falls ein task suspendiert wartet
       m_ready=1; 
-      eRTK_SetReady( padc->tid ); //dann aktivieren 
+      eRTK_SetReady( padc_active->tid ); //dann aktivieren 
      }
     //weiterschalten bis zum naechsten bereiten block oder ende der liste
     while( 1 ) {
-      if( ++adc_index>=ANZ_ADC ) { //listenende erreicht
-        adc_index=0;
+      if( ++padc_active>=adc_cntrl+ANZ_ADC ) { //listenende erreicht
+        padc_active=adc_cntrl;
         break;
        }
       else {
-        ++padc;
-        if( ++( padc->cnt ) >= padc->scaler ) { //adc kanal starten
-          padc->cnt=0;
-          ADMUX=( padc->mux&0x07 ) | padc->ref; 
-          if( padc->mux<=7 ) ADCSRB&=~( 1<<MUX5 );
+        ++padc_active;
+        if( ++( padc_active->cnt ) >= padc_active->scaler ) { //adc kanal starten
+          padc_active->cnt=0;
+          ADMUX=( padc_active->mux&0x07 ) | padc_active->ref; 
+          if( padc_active->mux<=7 ) ADCSRB&=~( 1<<MUX5 );
           else ADCSRB|=( 1<<MUX5 );
           ADCSRA|=( 1<<ADSC );
           break;
@@ -110,12 +88,12 @@ ISR( ADC_vect ) { //adc interrupt
        }
      }
    }
-  else adc_index=0;
+  else padc_active=adc_cntrl;
   if( m_ready ) eRTK_scheduler(); //scheduling durchfuehren falls eine task aktiviert wurde
  }
 
 uint8_t adc_sequencer( void ) { //soll im system timer interrupt aufgerufen werden
-  if( !adc_index ) {
+  if( padc_active==adc_cntrl ) {
     register tadc * padc=adc_cntrl;
     //finde startklaren adc kanal
     while( padc<&adc_cntrl[ANZ_ADC] ) {
@@ -138,6 +116,7 @@ void adc_init( void ) { //beim hochlauf aufzurufen
   ADMUX = 0;  //Kanal waehlen 0-7
   ADMUX |= /*(1<<REFS1) |*/ (1<<REFS0); // avcc Referenzspannung nutzen
   ADCSRA = (1<<ADIE)|(1<<ADEN)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0); //Frequenzvorteiler setzen auf %128, ADC aktivieren, int aktivieren
+  padc_active=adc_cntrl;
  }
 #endif
 
