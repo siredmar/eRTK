@@ -65,9 +65,11 @@ ISR( ADC_vect ) { //adc interrupt
   uint8_t m_ready=0;
   if( padc_active<adc_cntrl+ANZ_ADC ) {
     padc_active->value=ADCW;
-    if( padc_active->tid ) { //falls ein task suspendiert wartet
+    uint8_t tid=padc_active->tid;
+    if( tid ) { //falls ein task suspendiert wartet
+      padc_active->tid=0; //event loeschen
       m_ready=1; 
-      eRTK_SetReady( padc_active->tid ); //dann aktivieren 
+      eRTK_SetReady( tid ); //dann aktivieren 
      }
     //weiterschalten bis zum naechsten bereiten block oder ende der liste
     while( 1 ) {
@@ -92,20 +94,19 @@ ISR( ADC_vect ) { //adc interrupt
   if( m_ready ) eRTK_scheduler(); //scheduling durchfuehren falls eine task aktiviert wurde
  }
 
-uint8_t adc_sequencer( void ) { //soll im system timer interrupt aufgerufen werden
+uint8_t adc_sequencer( void ) { //soll im system timer interrupt DISABLED aufgerufen werden
   if( padc_active==adc_cntrl ) {
-    register tadc * padc=adc_cntrl;
     //finde startklaren adc kanal
-    while( padc<&adc_cntrl[ANZ_ADC] ) {
-      if( ++( padc->cnt ) >= padc->scaler ) { //adc kanal starten
-        padc->cnt=0;
-        ADMUX=( padc->mux&0x07 ) | padc->ref;
-        if( padc->mux<=7 ) ADCSRB&=~( 1<<MUX5 );
+    while( padc_active < adc_cntrl+ANZ_ADC ) {
+      if( ++( padc_active->cnt ) >= padc_active->scaler ) { //adc kanal starten
+        padc_active->cnt=0;
+        ADMUX=( padc_active->mux&0x07 ) | padc_active->ref;
+        if( padc_active->mux<=7 ) ADCSRB&=~( 1<<MUX5 );
         else ADCSRB|=( 1<<MUX5 );
         ADCSRA|=( 1<<ADSC );
         break;
        }
-      ++padc;
+      ++padc_active;
      }
     return !0;
    }
@@ -127,6 +128,7 @@ uint16_t adc_get( uint8_t mux ) { //holen des aktuellen wandlungswertes
     if( padc->mux==mux ) {
       ATOMIC_BLOCK( ATOMIC_RESTORESTATE	) {
         val=padc->value;
+        break;
        }
      }
     ++padc;
@@ -139,12 +141,18 @@ uint16_t adc_wait( uint8_t mux ) { //warten bis auf diesem kanal eine neue messu
   while( padc<adc_cntrl+ANZ_ADC ) {
     if( padc->mux==mux ) { //dieser kanal
       uint8_t tid=eRTK_GetTid();
+      uint8_t m_sc;
       ATOMIC_BLOCK( ATOMIC_RESTORESTATE ) {
         padc->tid=tid;
+        m_sc=padc->scaler;
+        if( !m_sc ) {
+          padc->scaler=1; //damit er im naechsten takt wandelt
+         }
         eRTK_SetSuspended( tid );
         eRTK_scheduler();
        }
-      return adc_get( mux );
+      padc->scaler=m_sc;
+      return padc->value;
      }
     ++padc;
    }

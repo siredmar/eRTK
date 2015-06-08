@@ -9,6 +9,12 @@
 #ifndef ADC_H_
 #define ADC_H_
 
+#define ADC_HZ1000         1
+#define ADC_HZ100         10
+#define ADC_HZ10         100
+#define ADC_HZ5          200
+
+
 #define ANZ_ADC 2
 typedef struct {
   uint8_t mux;       //0..15 beim atmega256x
