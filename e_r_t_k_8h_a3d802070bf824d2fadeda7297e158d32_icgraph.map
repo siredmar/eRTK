@@ -1,0 +1,10 @@
+<map id="eRTK_wefet" name="eRTK_wefet">
+<area shape="rect" id="node2" href="$e_r_t_k_8h.html#ac0c35182aeab65219bdf56d0f7d37aa0" title="eRTK_Sleep_ms" alt="" coords="144,31,263,57"/>
+<area shape="rect" id="node5" href="$e_r_t_k_8h.html#a1760711232ae117710d963736158d5b1" title="eRTK_get_sema" alt="" coords="144,81,263,108"/>
+<area shape="rect" id="node8" href="$e_r_t_k_8h.html#aaee1c3a6769446cecf3509ef02c236a9" title="eRTK_WaitUntil" alt="" coords="146,132,261,159"/>
+<area shape="rect" id="node9" href="$uart_8h.html#ab83a31dd12d15febaf2e02c2a73a81d4" title="read" alt="" coords="332,176,379,203"/>
+<area shape="rect" id="node3" href="$main_8c.html#a14e66dcbad6410dea375f5c317337909" title="tskHighPrio" alt="" coords="311,5,400,32"/>
+<area shape="rect" id="node4" href="$main_8c.html#a06b217051b843fee588ec8f4ac1139ca" title="tskADC" alt="" coords="322,56,389,83"/>
+<area shape="rect" id="node6" href="$uart_8h.html#adf4977ad7d178bb0610a7f44d9966519" title="open" alt="" coords="330,119,381,145"/>
+<area shape="rect" id="node7" href="$main_8c.html#ae1a6ddece7f21bcde56719ce12c0d4b0" title="tskUART" alt="" coords="448,148,523,175"/>
+</map>
