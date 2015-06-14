@@ -476,8 +476,10 @@ void eRTK_WaitUntil( uint8_t then ) {
 //schedule_immediately wenn true dann wird sofort eine neue Prozesstabelle ermittelt und der hoechstpriore prozess gestartet
 void eRTK_cpri( uint8_t tid, uint8_t prio, uint8_t schedule_immediately ) {
   if( tid==0 ) tid=akttask;
-  tcd[akttask].prio=prio;
-  if( schedule_immediately ) eRTK_scheduler();	
+  if( tid<VANZTASK ) {
+    tcd[akttask].prio=prio;
+    if( schedule_immediately ) eRTK_scheduler();	
+   } else deadbeef( SYS_VERIFY ); //die task id ist unbekannt
  }
 
 __inline__ void __attribute__ ( ( always_inline ) ) eRTK_timertick( void ) { //damit im irq alle register gesichert werden
