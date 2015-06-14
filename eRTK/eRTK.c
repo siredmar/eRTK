@@ -470,6 +470,15 @@ void eRTK_WaitUntil( uint8_t then ) {
   eRTK_wefet( then-eRTK_GetTimer8() );
  }
 
+//setzen der prioritaet fuer eine task
+//tid=0 setze die eigene prioritaet oder sonst die einer anderen
+//prio=neue prioritaet
+//schedule_immediately wenn true dann wird sofort eine neue Prozesstabelle ermittelt und der hoechstpriore prozess gestartet
+void eRTK_cpri( uint8_t tid, uint8_t prio, uint8_t schedule_immediately ) {
+  if( tid==0 ) tid=akttask;
+  tcd[akttask].prio=prio;
+  if( schedule_immediately ) eRTK_scheduler();	
+ }
 
 __inline__ void __attribute__ ( ( always_inline ) ) eRTK_timertick( void ) { //damit im irq alle register gesichert werden
   oIDLE( 0 );

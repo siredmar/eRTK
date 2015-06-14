@@ -60,6 +60,12 @@ void eRTK_WaitUntil( uint8_t then );   //warte auf den zeitpunkt
 void eRTK_Sleep_ms( uint16_t ms );     //warte eine gewisse zeit
 void eRTK_get_sema( uint8_t semaid );  /* Warten bis Semaphore frei ist und danach besetzen */
 void eRTK_wefet( uint8_t timeout );    //Task suspendieren fuer eine gewisse zeit
+
+//setzen der prioritaet fuer eine task
+//tid=0 setze die eigene prioritaet oder sonst die einer anderen
+//prio=neue prioritaet
+//schedule_immediately wenn true dann wird sofort eine neue Prozesstabelle ermittelt und der hoechstpriore prozess gestartet
+void eRTK_cpri( uint8_t tid, uint8_t prio, uint8_t schedule_immediately );
 void eRTK_init( void );                //initialisieren der datenstrukturen
 void eRTK_timer_init( void );          //system timer initialisieren
 void eRTK_go( void );                  //start der hoechstprioren ready task, notfalls idle
