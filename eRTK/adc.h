@@ -9,6 +9,8 @@
 #ifndef ADC_H_
 #define ADC_H_
 
+#if defined (__AVR_ATmega2560__)
+
 #define ADC_HZ1000         1
 #define ADC_HZ100         10
 #define ADC_HZ10         100
@@ -30,5 +32,7 @@ uint8_t adc_sequencer( void );    //soll im system timer interrupt aufgerufen we
 uint16_t adc_get( uint8_t mux );  //holen des aktuellen wandlungswertes
 uint16_t adc_wait( uint8_t mux ); //warten bis auf diesem kanal eine neue messung vorliegt und dann liefern
 void adc_init( void );            //beim hochlauf aufzurufen
+
+#endif
 
 #endif /* ADC_H_ */

@@ -523,10 +523,26 @@ static void timer0_init( void ) {
  }
 #endif
 
+//#include <avr/iox384c3.h>
+#if defined (__AVR_ATxmega384C3__)
+ISR( TCC0_OVF_vect ) { //1kHz timer
+  TCC0.CNT=( uint8_t )( -1*TIMERPRELOAD );
+  eRTK_timertick();
+  //adc_sequencer();
+ }
+ 
+static void timer0_init( void ) {
+  TCC0.CTRLA=5; //prescaler CLK/64
+  TCC0.INTFLAGS|=1; //overflow int flag
+  TCC0.CNT=( uint8_t )( -1*TIMERPRELOAD );
+ }
+#endif
+
 void eRTK_timer_init( void ) {
 #if defined (__AVR_ATmega2560__)
   timer0_init();
-#elif defined (__AVR_ATxmega128A1U__)
+#elif defined (__AVR_ATxmega384C3__)
+  timer0_init();
 #endif
  }
 

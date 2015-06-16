@@ -10,6 +10,8 @@
 #ifndef UART_H_
 #define UART_H_
 
+#if defined (__AVR_ATmega2560__)
+
 //uart port bitraten NUR DANN definieren wenn port gebraucht wird spart flash speicher
 #define UART0_BAUD 19200lu
 #define UART1_BAUD 9600lu
@@ -86,4 +88,5 @@ tUART open( tUART port );
 uint8_t read( tUART port, void * puffer, uint8_t nbytes, uint8_t timeout );
 void write( tUART port, void * puffer, uint8_t nbytes );
 
+#endif
 #endif /* UART_H_ */

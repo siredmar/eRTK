@@ -31,7 +31,7 @@
 
 #define ERTK_STACKSIZE     256
 
-#define IDLELED
+//#define IDLELED
 #ifdef IDLELED
 #ifndef sbi
 #define sbi(port,nr) (port|=_BV(nr))

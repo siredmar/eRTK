@@ -8,6 +8,8 @@
 #include "eRTK.h"
 #include "uart.h"
 
+#if defined (__AVR_ATmega2560__)
+
 #ifdef UART0_BAUD
 static volatile uint8_t rx_buf0[RX0_SIZE];
 static volatile uint8_t rx_in0, rx_out0;
@@ -460,3 +462,4 @@ void write( tUART port, void * puffer, uint8_t nbytes ) {
    }
  }
 
+#endif

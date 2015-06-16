@@ -1,0 +1,22 @@
+<map id="deadbeef" name="deadbeef">
+<area shape="rect" id="node2" href="$adc_8h.html#a3d0a4132cd86a5ecdfc21654cdca8b89" title="adc_wait" alt="" coords="335,5,408,32"/>
+<area shape="rect" id="node4" href="$e_r_t_k_8h.html#a4c664627999740245c2a31dc34f150cc" title="__attribute__" alt="" coords="153,360,250,387"/>
+<area shape="rect" id="node5" href="$e_r_t_k_8h.html#a42910d588a38ca0fca7d0897a715fdad" title="eRTK_go" alt="" coords="164,411,239,437"/>
+<area shape="rect" id="node7" href="$e_r_t_k_8h.html#a7ea5f3e666d805502c0f77d8e1cb7915" title="eRTK_SetReady" alt="" coords="142,512,261,539"/>
+<area shape="rect" id="node8" href="$e_r_t_k_8h.html#a3631624090b7ea09b3a64993b9c979e7" title="eRTK_init" alt="" coords="332,461,411,488"/>
+<area shape="rect" id="node11" href="$e_r_t_k_8h.html#aa63d7b8eeb6b2a9b10664b54f6e78e55" title="eRTK_SetSuspended" alt="" coords="128,107,275,133"/>
+<area shape="rect" id="node12" href="$e_r_t_k_8h.html#a3d802070bf824d2fadeda7297e158d32" title="eRTK_wefet" alt="" coords="326,107,417,133"/>
+<area shape="rect" id="node15" href="$e_r_t_k_8h.html#a1760711232ae117710d963736158d5b1" title="eRTK_get_sema" alt="" coords="468,259,587,285"/>
+<area shape="rect" id="node16" href="$uart_8h.html#adf4977ad7d178bb0610a7f44d9966519" title="open" alt="" coords="654,259,705,285"/>
+<area shape="rect" id="node19" href="$uart_8h.html#ab83a31dd12d15febaf2e02c2a73a81d4" title="read" alt="" coords="504,157,551,184"/>
+<area shape="rect" id="node20" href="$uart_8h.html#a39dc8420d8c03bc39479e40f91a8b28f" title="write" alt="" coords="347,208,396,235"/>
+<area shape="rect" id="node21" href="$e_r_t_k_8c.html#a17cb0c621d1b778f1d2ea451ee05b5d5" title="eRTK_free_sema" alt="" coords="141,563,262,589"/>
+<area shape="rect" id="node3" href="$main_8c.html#a06b217051b843fee588ec8f4ac1139ca" title="tskADC" alt="" coords="646,5,713,32"/>
+<area shape="rect" id="node6" href="$main_8c.html#a840291bc02cba5474a4cb46a9b9566fe" title="main" alt="" coords="502,436,553,463"/>
+<area shape="rect" id="node9" href="$e_r_t_k_8c.html#a4aa89b01a30bae72c6046aefc91072fa" title="__attribute__" alt="" coords="323,512,420,539"/>
+<area shape="rect" id="node10" href="$uart_8c.html#a084f0a9cf05b1877bd8a71a90dae7ff8" title="ISR" alt="" coords="350,563,393,589"/>
+<area shape="rect" id="node13" href="$e_r_t_k_8h.html#ac0c35182aeab65219bdf56d0f7d37aa0" title="eRTK_Sleep_ms" alt="" coords="468,56,587,83"/>
+<area shape="rect" id="node18" href="$e_r_t_k_8h.html#aaee1c3a6769446cecf3509ef02c236a9" title="eRTK_WaitUntil" alt="" coords="470,107,585,133"/>
+<area shape="rect" id="node14" href="$main_8c.html#a14e66dcbad6410dea375f5c317337909" title="tskHighPrio" alt="" coords="635,56,724,83"/>
+<area shape="rect" id="node17" href="$main_8c.html#ae1a6ddece7f21bcde56719ce12c0d4b0" title="tskUART" alt="" coords="772,208,847,235"/>
+</map>

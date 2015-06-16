@@ -7,6 +7,8 @@
 #include "eRTK.h"
 #include "adc.h"
 
+#if defined (__AVR_ATmega2560__)
+
 /*
   Der ADC wird von einer Sequencer Liste gesteuert.
   Die Sequenz wird vom System Timer angestossen und lauft bis zum Ende durch.
@@ -60,7 +62,6 @@ time[ms]  scaler=1  scaler=2    scaler=3  scaler=4  scaler=5  scaler=6  scaler=7
 
 static tadc * padc_active;  //aktuell wandelnder adc kanal
 
-#if defined (__AVR_ATmega2560__)
 ISR( ADC_vect ) { //adc interrupt
   uint8_t m_ready=0;
   if( padc_active<adc_cntrl+ANZ_ADC ) {
@@ -119,7 +120,7 @@ void adc_init( void ) { //beim hochlauf aufzurufen
   ADCSRA = (1<<ADIE)|(1<<ADEN)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0); //Frequenzvorteiler setzen auf %128, ADC aktivieren, int aktivieren
   padc_active=adc_cntrl;
  }
-#endif
+
 
 uint16_t adc_get( uint8_t mux ) { //holen des aktuellen wandlungswertes
   uint16_t val=-1;
@@ -160,3 +161,4 @@ uint16_t adc_wait( uint8_t mux ) { //warten bis auf diesem kanal eine neue messu
   return 0;
  }
 
+#endif

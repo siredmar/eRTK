@@ -49,6 +49,7 @@ void tskHighPrio( uint16_t param0, void *param1 ) { //prio ist 20
    }
  }
 
+#if defined (__AVR_ATmega2560__)
 //tskUART wird viermal gestartet, param0 ist 0..3
 //es wird derselbe programm code genutzt, anhand des param0 wird UART0..UART3 in jeder task genutzt
 //und 1 byte, 16 byte == sendepuffergroesse oder 20 byte gesendet und wieder zurueckgelesen
@@ -72,6 +73,17 @@ void tskUART( uint16_t param0, void *param1 ) { //prio ist 10
      }
    }
  }
+#endif
+
+#if defined (__AVR_ATxmega384C3__)
+void tskUART( uint16_t param0, void *param1 ) { //prio ist 10
+  while( 1 ) {
+    eRTK_Sleep_ms( 100 );
+  }
+}
+#endif
+
+#if defined (__AVR_ATmega2560__)
 
 //sequenzer liste mit adc mux selektor und scaler fuer die messrate
 tadc adc_cntrl[ANZ_ADC]={
@@ -86,6 +98,15 @@ void tskADC( uint16_t param0, void *param1 ) { //prio ist 15
     eRTK_Sleep_ms( 10 );
    }
  }
+#endif
+
+#if defined (__AVR_ATxmega384C3__)
+void tskADC( uint16_t param0, void *param1 ) { //prio ist 15
+  while( 1 ) { 
+    eRTK_Sleep_ms( 100 );
+   }
+ }
+#endif
 
 const t_eRTK_tcb rom_tcb[VANZTASK]={
   //tid    adresse    prio  p0 p1
@@ -100,6 +121,8 @@ const t_eRTK_tcb rom_tcb[VANZTASK]={
 int main( void ) {
   eRTK_init();
   eRTK_timer_init();
+#if defined (__AVR_ATmega2560__)
   adc_init();
+#endif
   eRTK_go();
  }

@@ -5,14 +5,24 @@ Project("{E66E83B9-2572-4076-B26E-6BE79FF3018A}") = "eRTK", "eRTK\eRTK.cppproj",
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM = Debug|ARM
 		Debug|AVR = Debug|AVR
+		Debug|Mixed Platforms = Debug|Mixed Platforms
+		Release|ARM = Release|ARM
 		Release|AVR = Release|AVR
+		Release|Mixed Platforms = Release|Mixed Platforms
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D8429A68-FD0B-4E44-9247-1A77CC346E65}.Debug|ARM.ActiveCfg = Debug|AVR
 		{D8429A68-FD0B-4E44-9247-1A77CC346E65}.Debug|AVR.ActiveCfg = Debug|AVR
 		{D8429A68-FD0B-4E44-9247-1A77CC346E65}.Debug|AVR.Build.0 = Debug|AVR
+		{D8429A68-FD0B-4E44-9247-1A77CC346E65}.Debug|Mixed Platforms.ActiveCfg = Debug|AVR
+		{D8429A68-FD0B-4E44-9247-1A77CC346E65}.Debug|Mixed Platforms.Build.0 = Debug|AVR
+		{D8429A68-FD0B-4E44-9247-1A77CC346E65}.Release|ARM.ActiveCfg = Release|AVR
 		{D8429A68-FD0B-4E44-9247-1A77CC346E65}.Release|AVR.ActiveCfg = Release|AVR
 		{D8429A68-FD0B-4E44-9247-1A77CC346E65}.Release|AVR.Build.0 = Release|AVR
+		{D8429A68-FD0B-4E44-9247-1A77CC346E65}.Release|Mixed Platforms.ActiveCfg = Release|AVR
+		{D8429A68-FD0B-4E44-9247-1A77CC346E65}.Release|Mixed Platforms.Build.0 = Release|AVR
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
