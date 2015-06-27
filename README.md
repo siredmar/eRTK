@@ -24,9 +24,13 @@ After setting up plls,clock and so on call these
 
 and the system should be started up, highest priority ready state task should be running.
 
-Using a similar ATmega, ATxmega or Cortex M0+ CPU is possibly too, try to adapt the #defines to your machine type.
+Using a similar ATmega, ATxmega or Cortex M0+ CPU is possible too, 
+
+try to adapt the #defines to your machine type.
 
 AT(x)mega special: 
 
-The code this time only supports machines with 24bit program counter, so only the ones with more than 128kB flash have a chance to run directly. If the smaller ones should be supported a 16bit program counter option has to be implemented, mostly the context switch push() and pop() are to be adopted.
+The code this time only supports machines with 24bit program counter, so only the ones with more than 128kB flash have a chance to run directly. 
+
+If the smaller ones should be supported a 16bit program counter option has to be implemented, mostly the context switch push() and pop() are to be adopted.
 
