@@ -4,11 +4,13 @@ Embedded Real Time Kernel for Micros
 In eRTK/html/index.html the source documentation is found, 
 please read the wiki too.
 
+To learn what a (R)eal (T)ime (K)ernel is please visit https://en.wikipedia.org/wiki/Real-time_operating_system
+
 The project directory holds the ATmega and ATxmega Atmelstudio project.
 
 In SAMD21 the Atmelstudio projekt for SAMD21 is found with its machine setup files.
 
-I didn't use the ASF because i don't want to blow up this project with things that not are necessary for this project.
+I didn't use the ASF because i don't want to blow up this project with things that are not necessary for this project.
 
 If one wants to use ASF or some other frame work, please create a new project with that and add the eRTK dirs.
 
@@ -20,7 +22,7 @@ After setting up plls,clock and so on call these
 
   eRTK_go();
 
-and the system should be up.
+and the system should be started up, highest priority ready state task should be running.
 
 Using a similar ATmega, ATxmega or Cortex M0+ CPU is possibly too, try to adapt the #defines to your machine type.
 
