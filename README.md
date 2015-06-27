@@ -32,5 +32,5 @@ AT(x)mega special:
 
 The code this time only supports machines with 24bit program counter, so only the ones with more than 128kB flash have a chance to run directly. 
 
-If the smaller ones should be supported a 16bit program counter option has to be implemented, mostly the context switch push() and pop() are to be adopted.
+If the smaller ones should be supported a 16bit program counter option has to be implemented, mostly the context switch push() and pop() have to be adopted.
 
