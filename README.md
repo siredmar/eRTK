@@ -13,6 +13,7 @@ I didn't use the ASF because i don't want to blow up this project with things th
 If one wants to use ASF or some other frame work, please create a new project with that and add the eRTK dirs.
 
 After setting up plls,clock and so on call these
+
   eRTK_init();
 
   eRTK_timer_init();
