@@ -4,13 +4,14 @@
  * Created: 04.05.2015 15:52:50
  *  Author: er
  */ 
+#if defined (__AVR_ATmega2560__)
+
 #include <util/atomic.h>
-#include "eRTK.h"
+#include "../eRTK.h"
 
 #ifndef UART_H_
 #define UART_H_
 
-#if defined (__AVR_ATmega2560__)
 
 //uart port bitraten NUR DANN definieren wenn port gebraucht wird spart flash speicher
 #define UART0_BAUD 19200lu

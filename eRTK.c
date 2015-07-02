@@ -4,19 +4,34 @@
  * Created: 13.04.2015 07:52:46
  *  Author: er
  */ 
-#include <avr/io.h>
-#include <avr/interrupt.h>
 #include <string.h>
 #include <stdio.h>
+
+#if defined (__AVR_ATmega2560__)
+#include <avr/io.h>
+#include <avr/interrupt.h>
 #include <avr/sleep.h>
 #include <avr/wdt.h>
-#include "eRTK.h"
-#include "adc.h"
+#include "AVR/adc.h"
+#endif
 
+#ifdef __SAMD21J18A__
+#endif
+
+#include "eRTK.h"
+
+#if defined (__AVR_ATmega2560__) ||(__AVR_ATxmega384C3__)
 #ifdef ERTKDEBUG
 uint8_t stack[VANZTASK+1][ERTK_STACKSIZE]  __attribute__ ((aligned (256)));  /* Jede Task hat Stack a' STACKSIZE Byte */
 #else
 uint8_t stack[VANZTASK+1][ERTK_STACKSIZE];  /* Jede Task hat Stack a' STACKSIZE Byte */
+#endif
+#elif defined (__SAMD21J18A__)
+#ifdef ERTKDEBUG
+uint32_t stack[VANZTASK+1][ERTK_STACKSIZE]  __attribute__ ((aligned (4096)));  /* Jede Task hat Stack a' STACKSIZE words */
+#else
+uint32_t stack[VANZTASK+1][ERTK_STACKSIZE];  /* Jede Task hat Stack a' STACKSIZE words */
+#endif
 #endif
 
 void * stackptr[VANZTASK+1]; /* Ablage fuer Stackpointer der Tasks */
@@ -56,6 +71,7 @@ volatile uint8_t  eRTK_iperf;            //index im array 0..255
 volatile uint16_t eRTK_ticks;            //wie spaet ist es nach dem urknall in ms
 volatile uint8_t  eRTK_cnt_overload;     //zaehlt die aufeinanderfolgenden overload phasen
 
+
 void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
 #ifdef ERTKDEBUG
   while( 1 ) {           //14+2=16 cycles pro loop -> 16MHz -> 1000 inc/ms
@@ -82,18 +98,20 @@ __attribute__ ((noinline)) void deadbeef( tsys reason ) {
  }
 
 
-void * pp_stack; //speicher f�r stackpointer w�hrend push/pop
+void * pp_stack; //speicher fuer stackpointer waehrend push/pop
+
+#if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
 //push pc, push r0, r0<-sreg, push r0..r31
 #define push() { \
   asm volatile ( \
-  "push	r0\n"/*push r0*/ \
-  "in	r0, __SREG__\n" \
+  "push	r0 \n"/*push r0*/ \
+  "in r0, __SREG__ \n" \
   "cli\n" /*push sreg, push r1..r31 */\ 
-  "push	 r0\npush  r1\npush	 r2\npush  r3\npush	 r4\npush  r5\npush	 r6\npush  r7\npush	 r8\npush  r9\npush	r10\npush	r11\npush	r12\npush	r13\npush	r14\npush	r15\npush	r16\npush	r17\npush	r18\npush	r19\npush	r20\npush	r21\npush	r22\npush	r23\npush	r24\npush	r25\npush	r26\npush	r27\npush	r28\npush	r29\npush	r30\npush	r31\n" \
-  "in		r0, __SP_L__\n" \
-  "sts  pp_stack, r0\n" \
-  "in		r0, __SP_H__\n" \
-  "sts	pp_stack+1, r0\n" \
+  "push	r0\npush  r1\npush	 r2\npush  r3\npush	 r4\npush  r5\npush	 r6\npush  r7\npush	 r8\npush  r9\npush	r10\npush	r11\npush	r12\npush	r13\npush	r14\npush	r15\npush	r16\npush	r17\npush	r18\npush	r19\npush	r20\npush	r21\npush	r22\npush	r23\npush	r24\npush	r25\npush	r26\npush	r27\npush	r28\npush	r29\npush	r30\npush	r31\n" \
+  "in r0, __SP_L__ \n" \
+  "sts pp_stack, r0 \n" \
+  "in r0, __SP_H__ \n" \
+  "sts pp_stack+1, r0 \n" \
   ); \
  }
 
@@ -102,19 +120,119 @@ void * pp_stack; //speicher f�r stackpointer w�hrend push/pop
   asm volatile ( \
   "lds r0, pp_stack \n" \
   "out __SP_L__, r0 \n" \
-  "lds r0, pp_stack+1\n" \
-  "out __SP_H__, r0\n" \
+  "lds r0, pp_stack+1 \n" \
+  "out __SP_H__, r0 \n" \
   /*pop r31..sreg*/ \
-	"pop	r31\npop	r30\npop	r29\npop	r28\npop	r27\npop	r26\npop	r25\npop	r24\npop	r23\npop	r22\npop	r21\npop	r20\npop	r19\npop	r18\npop	r17\npop	r16\npop	r15\npop	r14\npop	r13\npop	r12\npop	r11\npop	r10\npop	 r9\npop	 r8\npop	 r7\npop	 r6\npop	 r5\npop	 r4\npop	 r3\npop	 r2\npop	 r1\npop	 r0\n" \
-	"out	__SREG__, r0\n" \
-	"pop	r0\n"/*pop r0*/ \
-  "sei\n" \
+  "pop r31\npop	r30\npop	r29\npop	r28\npop	r27\npop	r26\npop	r25\npop	r24\npop	r23\npop	r22\npop	r21\npop	r20\npop	r19\npop	r18\npop	r17\npop	r16\npop	r15\npop	r14\npop	r13\npop	r12\npop	r11\npop	r10\npop	 r9\npop	 r8\npop	 r7\npop	 r6\npop	 r5\npop	 r4\npop	 r3\npop	 r2\npop	 r1\npop	 r0\n" \
+  "out __SREG__, r0 \n" \
+  "pop r0 \n"/*pop r0*/ \
+  "sei \n" \
   ); \
  }
+#endif
+
+#if defined (__SAMD21J18A__)
+//r8,r9,r10,r11,r12,r0,r1,r2,r3,r4,r5,r6,r7,lr
+#define push() { \
+  asm volatile ( \
+  /*direkt kann man nur die lo regs pushen*/ \
+  "cpsid i \n" \
+  "push { lr }\n" \
+  "push { r0-r7 } \n"   /*r0-r7 und linkregister auf stack*/ \
+  "mov r0, r8 \n" \
+  "mov r1, r9 \n" \
+  "mov r2, r10 \n" \
+  "mov r3, r11 \n" \
+  "mov r4, r12 \n" \
+  "push { r0-r4 } \n"       /*r8-r12 auf stack*/ \
+  "mrs r0, msp \n"          /*msp nach r0*/ \
+  "ldr r1, =pp_stack \n" \
+  "ldr r1, [ r1 ] \n" \
+  "str r0, [ r1, #0 ] \n" \
+  ); \
+ }
+/*nun sind alle regs gesichert auf stack, stackpointer in pp_stack gesichert*/
+
+/*der stackpointer in pp_stack liegt vor, alle register werden restauriert und der link adressiert*/
+#define pop() {  \
+  asm volatile ( \
+  "ldr r1, =pp_stack \n"    /*zeiger auf pp_stack */     \
+  "ldr r1, [ r1 ] \n"       /*inhalt pp_stack */         \
+  "msr psp, r1 \n"          /*speichere pp_stack in psp*/\
+  "msr msp, r1 \n"          /*und in msp*/               \
+  "cpsie i \n"              /*sperre interruts */        \
+  "pop { r0-r4 } \n"        /*hole r8-r12*/              \
+  "mov r8, r0 \n" \
+  "mov r9, r1 \n" \
+  "mov r10, r2 \n" \
+  "mov r11, r3 \n" \
+  "mov r12, r4 \n" \
+  "pop { r0-r7 } \n"   /*restauriere r0-r7, springe nach link*/ \
+  "pop { pc } \n" \
+  ); \
+ }
+ 
+ void asmtest( void ) {
+	 asm volatile(
+	 "mov r0, #8\n"
+	 "mov r1, #9\n"
+	 "mov r2, #10\n"
+	 "mov r3, #11\n"
+	 "mov r4, #12\n"
+	 "mov r8, r0\n"
+	 "mov r9, r1\n"
+	 "mov r10, r2\n"
+	 "mov r11, r3\n"
+	 "mov r12, r4\n"
+	 "mov r0, #0\n"
+	 "mov r1, #1\n"
+	 "mov r2, #2\n"
+	 "mov r3, #3\n"
+	 "mov r4, #4\n"
+	 "mov r5, #5\n"
+	 "mov r6, #6\n"
+	 "mov r7, #7\n"
+
+	 "push {lr}\n" \
+	 "push {r0-r7}\n" \
+	 "mov r0, r8\n" \
+	 "mov r1, r9\n" \
+	 "mov r2, r10\n" \
+	 "mov r3, r11\n" \
+	 "mov r4, r12\n" \
+	 "push { r0-r4 }\n" \
+
+	 //do some destructive things
+	 "mul r0, r0, r1\n"
+	 "mul r1, r1, r2\n"
+	 "mul r2, r2, r3\n"
+	 "mul r3, r3, r4\n"
+	 "push {r0-r3}\n"
+	 "pop  {r4-r7}\n"
+	 "mov r8, r0\n"
+	 "mov r9, r1\n"
+	 "mov r10, r2\n"
+	 "mov r11, r3\n"
+	 "mov r12, r4\n"
+	 
+	 "pop { r0-r4 }\n" \
+	 "mov r12, r4\n" \
+	 "mov r11, r3\n" \
+	 "mov r10, r2\n" \
+	 "mov r9, r1\n" \
+	 "mov r8, r0\n" \
+	 "pop { r0-r7 }\n" \
+	 "pop { pc }\n" \
+	 );
+ }
+
+#endif
+
 
 void __attribute__ ((naked)) eRTK_scheduler( void ) { /* start der hoechstprioren ready task, notfalls idle */
   push();
   stackptr[akttask]=pp_stack;
+//pop();
   //
   if( pTaskRdy ) { //da muss natuerlich immer was drinstehen ;)
     //do round robin bei mehreren mit gleicher prio
@@ -144,7 +262,10 @@ void __attribute__ ((naked)) eRTK_scheduler( void ) { /* start der hoechstpriore
   pp_stack=stackptr[akttask];
   pop();
   sei();
+#if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)  
   asm volatile ( "ret" );
+#elif defined (__SAMD21J18A__)
+#endif  
  }
 
 
@@ -155,7 +276,11 @@ void eRTK_go( void ) { /* start der hoechstprioren ready task, notfalls idle */
   eRTK_up=1;
   pp_stack=stackptr[akttask];
   pop();
+#if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
   asm volatile( "ret" );
+#elif defined (__SAMD21J18A__)
+#endif
+  deadbeef( SYS_UNKNOWN ); //hier duerfen wir nie wieder ankommen, wenn verwaltungsstrukturen i.O. sind
  }
 
 /* Prinzip der Ready Liste:
@@ -326,7 +451,8 @@ void sema_init( void ) {
    }
  }
 
-/*
+/* 
+AVR Stackbelegung:
 stck[n][STACKSIZE]
 - 1-+
 - 2 |deadbeef() bei return aus der task zurueck
@@ -404,6 +530,7 @@ void eRTK_init( void ) { /* Initialisierung der Daten des Echtzeitsystems */
     hit[index]=1;
    }
   //
+#if defined (__AVR_ATmega2560__) ||(__AVR_ATxmega384C3__)
   for( n=0; n<VANZTASK+1; n++ ) { /* SP der Tasks auf jeweiliges Stackende setzen */
     for( uint16_t f=0; f<ERTK_STACKSIZE/4; f++ ) memcpy( stack[n]+4*f, "\xde\xad\xbe\xef", 4 );
     //memcpy( &stack[n][214], "0123456789abcdef0123456789ABCDEF", 32 );
@@ -439,6 +566,36 @@ void eRTK_init( void ) { /* Initialisierung der Daten des Echtzeitsystems */
     //
     stackptr[n]=&stack[n][ERTK_STACKSIZE-40];
    }
+  #elif defined (__SAMD21J18A__)
+  for( n=0; n<VANZTASK+1; n++ ) { /* SP der Tasks auf jeweiliges Stackende setzen */
+    for( int f=0; f<ERTK_STACKSIZE; f++ ) stack[n][f]=0xdeadbeef;
+    //cortex m0+ arm thumb register set
+    //r0-r12 general purpose registers
+    //r13=MSP stack pointer
+    //r14=LR link register
+    //r15=PC program counter
+    //PSR program status register
+    //PRIMASK
+    //CONTROL
+	//r8,r9,r10,r11,r12,r0,r1,r2,r3,r4,r5,r6,r7,pc
+	stack[n][ERTK_STACKSIZE-14]=8;
+	stack[n][ERTK_STACKSIZE-13]=9;
+	stack[n][ERTK_STACKSIZE-12]=10;
+	stack[n][ERTK_STACKSIZE-11]=11;
+	stack[n][ERTK_STACKSIZE-10]=12;
+	stack[n][ERTK_STACKSIZE-9]=0;
+	stack[n][ERTK_STACKSIZE-8]=1;
+	stack[n][ERTK_STACKSIZE-7]=2;
+	stack[n][ERTK_STACKSIZE-6]=3;
+	stack[n][ERTK_STACKSIZE-5]=4;
+	stack[n][ERTK_STACKSIZE-4]=5;
+	stack[n][ERTK_STACKSIZE-3]=6;
+	stack[n][ERTK_STACKSIZE-2]=7;
+    if( n ) stack[n][ERTK_STACKSIZE-1]=( unsigned )rom_tcb[n-1].task;
+    else stack[n][ERTK_STACKSIZE-1]=( unsigned )eRTK_Idle;
+	stackptr[n]=&stack[n][ERTK_STACKSIZE-14];
+   }
+  #endif 
   sema_init();
  }
 
@@ -482,7 +639,12 @@ void eRTK_cpri( uint8_t tid, uint8_t prio, uint8_t schedule_immediately ) {
    } else deadbeef( SYS_VERIFY ); //die task id ist unbekannt
  }
 
-__inline__ void __attribute__ ( ( always_inline ) ) eRTK_timertick( void ) { //damit im irq alle register gesichert werden
+#if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
+__inline__ void __attribute__ ( ( always_inline ) ) 
+#elif defined (__SAMD21J18A__)
+void 
+#endif
+eRTK_timertick( void ) { //damit im irq alle register gesichert werden
   oIDLE( 0 );
   if( eRTK_ticks<65535u ) ++eRTK_ticks;
   ++eRTK_m_timer.timer16;
@@ -505,7 +667,7 @@ __inline__ void __attribute__ ( ( always_inline ) ) eRTK_timertick( void ) { //d
     else eRTK_cnt_overload=0;
     eRTK_perfcount=0;
    }
-  if( eRTK_up ) eRTK_scheduler();
+//ToDo  if( eRTK_up ) eRTK_scheduler();
  }
 
 
@@ -523,7 +685,7 @@ static void timer0_init( void ) {
  }
 #endif
 
-//#include <avr/iox384c3.h>
+
 #if defined (__AVR_ATxmega384C3__)
 ISR( TCC0_OVF_vect ) { //1kHz timer
   TCC0.CNT=( uint8_t )( -1*TIMERPRELOAD );
@@ -538,11 +700,29 @@ static void timer0_init( void ) {
  }
 #endif
 
+#if defined (__SAMD21J18A__)
+void SysTick_Handler( void ) {
+  asm volatile ( "mrs r0, primask\n" );
+  asm volatile ( "cpsid i" );
+  eRTK_timertick();
+  asm volatile ( "msr primask, r0\n" );  
+ }
+
+void init_Systimer( void ) {
+  *(NVIC_SYSTICK_LOAD) = ( F_CPU / eRTKHZ ) - 1UL;
+  *(NVIC_SYSTICK_CTRL) = NVIC_SYSTICK_CLK | NVIC_SYSTICK_INT | NVIC_SYSTICK_ENABLE;
+ }
+#endif
+
+
+
 void eRTK_timer_init( void ) {
 #if defined (__AVR_ATmega2560__)
   timer0_init();
 #elif defined (__AVR_ATxmega384C3__)
   timer0_init();
+#elif defined (__SAMD21J18A__)
+  init_Systimer();
 #endif
  }
 

@@ -4,24 +4,46 @@
  * Created: 27.04.2015 13:38:51
  *  Author: er
  */ 
-#include <avr/io.h>
 #include <stddef.h>
+
+#if defined (__AVR_ATmega2560__)
+#include <avr/io.h>
 #include <util/atomic.h>
 #include <avr/interrupt.h>
+#endif
+
+#if defined (__SAMD21J18A__)
+#include "SAMD21/cortex-atomic.h"
+//arm cortex systimer register on SAMD21
+#define NVIC_SYSTICK_CTRL		( ( volatile uint32_t *) 0xe000e010 )
+#define NVIC_SYSTICK_LOAD		( ( volatile uint32_t *) 0xe000e014 )
+#define NVIC_SYSTICK_CLK		4
+#define NVIC_SYSTICK_INT		2
+#define NVIC_SYSTICK_ENABLE		1
+#endif
 
 #ifndef ERTK_H_
 #define ERTK_H_
 
 #define VANZTASK             6         //anzahl definierter prozesse
 
+#if defined (__AVR_ATmega2560__)
 #define F_CPU       16000000ul
+#elif defined (__AVR_ATxmega384C3__)
+#define F_CPU        1000000ul
+#elif defined (__SAMD21J18A__)
+#define F_CPU       48000000ul
+#endif
 
 #define eRTKHZ            1000         //system tick rate
+
+#if defined (__AVR_ATmega2560__)
 #define TIMERPREDIV       64ul         //verteiler timer clock
 #define TIMERPRELOAD ( F_CPU/( TIMERPREDIV*eRTKHZ ) )
 
 #if (TIMERPRELOAD>254) /* weil es ein 8 bit timer ist */
 #error eRTK:Systematischer 8 Bit Overflow Fehler im SYSTIMER !
+#endif
 #endif
 
 #define ERTKDEBUG                      //gibt ein paar mehr infos zum debugging
@@ -78,5 +100,7 @@ typedef struct {                       //der task control block
  } t_eRTK_tcb;
 
 extern const t_eRTK_tcb rom_tcb[VANZTASK];
+
+
 
 #endif /* ERTK_H_ */
