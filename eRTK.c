@@ -137,8 +137,7 @@ void * pp_stack; //speicher fuer stackpointer waehrend push/pop
   asm volatile ( \
   /*direkt kann man nur die lo regs pushen*/ \
   "cpsid i \n" \
-  "push { lr }\n" \
-  "push { r0-r7 } \n"   /*r0-r7 und linkregister auf stack*/ \
+  "push { r0-r7, lr } \n"   /*r0-r7 und linkregister auf stack*/ \
   "mov r0, r8 \n" \
   "mov r1, r9 \n" \
   "mov r2, r10 \n" \
@@ -147,8 +146,7 @@ void * pp_stack; //speicher fuer stackpointer waehrend push/pop
   "push { r0-r4 } \n"       /*r8-r12 auf stack*/ \
   "mrs r0, msp \n"          /*msp nach r0*/ \
   "ldr r1, =pp_stack \n" \
-  "ldr r1, [ r1 ] \n" \
-  "str r0, [ r1, #0 ] \n" \
+  "str r0, [ r1 ] \n" \
   ); \
  }
 /*nun sind alle regs gesichert auf stack, stackpointer in pp_stack gesichert*/
@@ -156,10 +154,9 @@ void * pp_stack; //speicher fuer stackpointer waehrend push/pop
 /*der stackpointer in pp_stack liegt vor, alle register werden restauriert und der link adressiert*/
 #define pop() {  \
   asm volatile ( \
-  "ldr r1, =pp_stack \n"    /*zeiger auf pp_stack */     \
-  "ldr r1, [ r1 ] \n"       /*inhalt pp_stack */         \
-  "msr psp, r1 \n"          /*speichere pp_stack in psp*/\
-  "msr msp, r1 \n"          /*und in msp*/               \
+  "ldr r0, =pp_stack \n"    /*zeiger auf pp_stack */     \
+  "ldr r0, [ r0 ] \n"       /*inhalt pp_stack */         \
+  "msr msp, r0 \n"          /*speichere pp_stack in msp*/\
   "cpsie i \n"              /*sperre interruts */        \
   "pop { r0-r4 } \n"        /*hole r8-r12*/              \
   "mov r8, r0 \n" \
@@ -167,8 +164,7 @@ void * pp_stack; //speicher fuer stackpointer waehrend push/pop
   "mov r10, r2 \n" \
   "mov r11, r3 \n" \
   "mov r12, r4 \n" \
-  "pop { r0-r7 } \n"   /*restauriere r0-r7, springe nach link*/ \
-  "pop { pc } \n" \
+  "pop { r0-r7, pc } \n"   /*restauriere r0-r7, springe nach link*/ \
   ); \
  }
  
@@ -229,7 +225,7 @@ void * pp_stack; //speicher fuer stackpointer waehrend push/pop
 #endif
 
 
-void __attribute__ ((naked)) eRTK_scheduler( void ) { /* start der hoechstprioren ready task, notfalls idle */
+void __attribute__ ((naked)) eRTK_scheduler( void ) { /* start der hoechstprioren ready task, oder idle task, oder der büffel wenn alles scheitert ;) */
   push();
   stackptr[akttask]=pp_stack;
 //pop();
@@ -261,8 +257,8 @@ void __attribute__ ((naked)) eRTK_scheduler( void ) { /* start der hoechstpriore
   //
   pp_stack=stackptr[akttask];
   pop();
-  sei();
 #if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)  
+  sei();
   asm volatile ( "ret" );
 #elif defined (__SAMD21J18A__)
 #endif  
@@ -275,12 +271,16 @@ void eRTK_go( void ) { /* start der hoechstprioren ready task, notfalls idle */
   //
   eRTK_up=1;
   pp_stack=stackptr[akttask];
+#if defined (__SAMD21J18A__)
+  asm volatile(	"movs r0, #0 \n" ); /* privilegierte ausfuehrung und nehme den msp stack. */
+  asm volatile(	"msr CONTROL, r0 \n" );
+#endif
   pop();
 #if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
   asm volatile( "ret" );
 #elif defined (__SAMD21J18A__)
 #endif
-  deadbeef( SYS_UNKNOWN ); //hier duerfen wir nie wieder ankommen, wenn verwaltungsstrukturen i.O. sind
+  deadbeef( SYS_UNKNOWN ); //hier duerfen wir nie wieder ankommen, wenn die verwaltungsstrukturen i.O. sind
  }
 
 /* Prinzip der Ready Liste:
@@ -667,7 +667,7 @@ eRTK_timertick( void ) { //damit im irq alle register gesichert werden
     else eRTK_cnt_overload=0;
     eRTK_perfcount=0;
    }
-//ToDo  if( eRTK_up ) eRTK_scheduler();
+  if( eRTK_up ) eRTK_scheduler();
  }
 
 
@@ -702,10 +702,10 @@ static void timer0_init( void ) {
 
 #if defined (__SAMD21J18A__)
 void SysTick_Handler( void ) {
-  asm volatile ( "mrs r0, primask\n" );
-  asm volatile ( "cpsid i" );
+  //asm volatile ( "mrs r0, primask\n" );
+  //asm volatile ( "cpsid i" );
   eRTK_timertick();
-  asm volatile ( "msr primask, r0\n" );  
+  //asm volatile ( "msr primask, r0\n" );  
  }
 
 void init_Systimer( void ) {

@@ -51,7 +51,7 @@
 #define eRTK_STARTUP_MS      0         //solange geben wir allen tasks zusammen zum hochlauf bis wir overload pruefen
 #define eRTK_MAX_OVERLOAD    0         //und dies ist die max. erlaubte zahl an overload phasen bevor deadbeef() aufgerufen wird
 
-#define ERTK_STACKSIZE     256
+#define ERTK_STACKSIZE     64/*256*/
 
 //#define IDLELED
 #ifdef IDLELED

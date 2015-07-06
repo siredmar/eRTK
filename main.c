@@ -46,6 +46,36 @@
 #include <stdio.h>
 #include "eRTK.h"
 
+#if defined (__SAMD21J18A__)
+#include <samd21j18a.h>
+#include <instance/mtb.h>
+
+#define IS_MTB_ENABLED \
+REG_MTB_MASTER & MTB_MASTER_EN
+#define DISABLE_MTB \
+REG_MTB_MASTER = REG_MTB_MASTER & ~MTB_MASTER_EN
+#define ENABLE_MTB \
+REG_MTB_MASTER = REG_MTB_MASTER | MTB_MASTER_EN
+
+__attribute__((aligned(128)))
+volatile char __tracebuffer__[128];
+volatile int __tracebuffersize__ = sizeof(__tracebuffer__);
+void InitTraceBuffer()
+{
+	int index = 0;
+	uint32_t mtbEnabled = IS_MTB_ENABLED;
+	DISABLE_MTB;
+	for(index =0; index<128; index++)
+	{
+		__tracebuffer__[index];
+		__tracebuffersize__;
+	}
+	if(mtbEnabled)
+	ENABLE_MTB;
+}
+
+#endif
+
 void tskHighPrio( uint16_t param0, void *param1 ) { //prio ist 20
   while( 1 ) { //kurze aktivitaet auf prio 20 muss alles auf prio 10 sofort unterbrechen
     eRTK_Sleep_ms( 10 );
@@ -124,7 +154,10 @@ const t_eRTK_tcb rom_tcb[VANZTASK]={
  };
 
 int main( void ) {
-	asmtest();
+#if defined (__SAMD21J18A__)
+//  InitTraceBuffer();
+#endif
+	//asmtest();
   eRTK_init();
   eRTK_timer_init();
 #if defined (__AVR_ATmega2560__)
@@ -133,3 +166,4 @@ int main( void ) {
   eRTK_go();
   deadbeef( SYS_UNKNOWN ); //hier duerfen wir nie wieder ankommen, wenn verwaltungsstrukturen i.O. sind
  }
+
