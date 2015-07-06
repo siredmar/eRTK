@@ -6,9 +6,9 @@ please read the wiki too.
 
 To learn what a (R)eal (T)ime (K)ernel is please visit https://en.wikipedia.org/wiki/Real-time_operating_system
 
-The project directory holds the ATmega and ATxmega Atmelstudio project.
+The project directory subdir AVR/ holds the ATmega and ATxmega Atmelstudio project.
 
-In SAMD21 the Atmelstudio projekt for SAMD21 is found with its machine setup files.
+In SAMD21/ the Atmelstudio projekt for SAMD21 is found with its machine setup files and some test code.
 
 I didn't use the ASF because i don't want to blow up this project with things that are not necessary for this project.
 
