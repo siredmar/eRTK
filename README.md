@@ -1,7 +1,7 @@
 # eRTK
 Embedded Real Time Kernel for Micros
 
-In eRTK/html/index.html the source documentation is found, 
+In eRTK/AVR/html/index.html the source documentation is found, 
 please read the wiki too.
 
 To learn what a (R)eal (T)ime (K)ernel is please visit https://en.wikipedia.org/wiki/Real-time_operating_system
