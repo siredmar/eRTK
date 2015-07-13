@@ -64,14 +64,23 @@ s_tcd * pTaskRdy;         /* einfache verkettung aller ready tasks ueber tcd.nex
    900 -> 100*16=1600 zyklen wurden anderweitig verbraucht (in diesem 1ms intervall)
   ! z.b. lcd_clear_area() braucht mehr als 10ms !
 */
-volatile uint8_t  eRTK_up;               //wird gesetzt wenn das system gestartet ist
+#if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
 volatile uint16_t eRTK_perfcount;        //aktueller counter
 volatile uint16_t eRTK_perfcounter[256]; //counter array der letzen 256ms
-volatile uint8_t  eRTK_iperf;            //index im array 0..255
 volatile uint16_t eRTK_ticks;            //wie spaet ist es nach dem urknall in ms
 volatile uint8_t  eRTK_cnt_overload;     //zaehlt die aufeinanderfolgenden overload phasen
+#elif defined (__SAMD21J18A__)
+volatile uint32_t eRTK_perfcount;        //aktueller counter
+volatile uint32_t eRTK_perfcounter[256]; //counter array der letzen 256ms
+volatile uint32_t eRTK_ticks;            //wie spaet ist es nach dem urknall in ms
+volatile uint32_t  eRTK_cnt_overload;     //zaehlt die aufeinanderfolgenden overload phasen
+#endif
+volatile uint8_t  eRTK_up;               //wird gesetzt wenn das system gestartet ist
+volatile uint8_t  eRTK_iperf;            //index im array 0..255
 
 
+
+#if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
 void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
 #ifdef ERTKDEBUG
   while( 1 ) {           //14+2=16 cycles pro loop -> 16MHz -> 1000 inc/ms
@@ -91,6 +100,27 @@ void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
    }
 #endif
  }
+#elif defined (__SAMD21J18A__)
+void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
+#ifdef ERTKDEBUG
+  while( 1 ) {           //
+	cli();               //cpsid i
+	++eRTK_perfcount;    //ldr	r2, [r3] / adds	r2, #1 / str	r2, [r3]
+	sei();               //cpsie i
+	oIDLEfast( 1 );      //nop nop
+   }                     //b	#-18
+#else
+  while( 1 ) {
+	set_sleep_mode( SLEEP_MODE_IDLE );
+	sleep_enable();
+	sei();
+	oIDLE( 1 );
+	sleep_cpu();
+	sleep_disable();
+   }
+#endif
+ }
+#endif
 
 
 __attribute__ ((noinline)) void deadbeef( tsys reason ) {

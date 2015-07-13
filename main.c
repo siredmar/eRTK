@@ -47,8 +47,9 @@
 #include "eRTK.h"
 
 #if defined (__SAMD21J18A__)
-#include <samd21j18a.h>
+#include <samd21.h>
 #include <instance/mtb.h>
+#include <instance/port.h>
 
 #define IS_MTB_ENABLED \
 REG_MTB_MASTER & MTB_MASTER_EN
@@ -78,7 +79,12 @@ void InitTraceBuffer()
 
 void tskHighPrio( uint16_t param0, void *param1 ) { //prio ist 20
   while( 1 ) { //kurze aktivitaet auf prio 20 muss alles auf prio 10 sofort unterbrechen
-    eRTK_Sleep_ms( 10 );
+    eRTK_Sleep_ms( 500 );
+#if defined (__SAMD21J18A__)
+    //yellow led at pb30
+	REG_PORT_DIR1|=( 1<<30 );
+	REG_PORT_OUT1^=( 1<<30 );
+#endif
    }
  }
 

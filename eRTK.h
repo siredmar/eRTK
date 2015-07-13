@@ -32,7 +32,8 @@
 #elif defined (__AVR_ATxmega384C3__)
 #define F_CPU        1000000ul
 #elif defined (__SAMD21J18A__)
-#define F_CPU       48000000ul
+#define F_CPU        1000000           //default without further actions
+//#define F_CPU       48000000           //maximum
 #endif
 
 #define eRTKHZ            1000         //system tick rate
