@@ -10,10 +10,10 @@ The project directory subdir AVR/ holds the ATmega and ATxmega Atmelstudio proje
 
 In SAMD21/ the Atmelstudio projekt for SAMD21 is found with its machine setup files and some test code.
 
-The Z180/ directory holds old Zilog Z180 code without makefile because the commercial c compiler i used that time isn't available today. 
+The Z180/ directory holds old Zilog Z180 code without makefile because the commercial C compiler i used that time isn't available today. 
 So the code could only be used as reference when porting to newer z80 derivates on gcc.
 
-I didn't use the ASF because i don't want to blow up this project with things that are not necessary for this project.
+I didn't use the Atmel ASF because i don't want to blow up this project with things that are not necessary for this project.
 
 If one wants to use ASF or some other frame work, please create a new project with that and add the eRTK dirs.
 

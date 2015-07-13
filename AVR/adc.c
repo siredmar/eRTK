@@ -79,7 +79,6 @@ ISR( ADC_vect ) { //adc interrupt
         break;
        }
       else {
-        ++padc_active;
         if( ++( padc_active->cnt ) >= padc_active->scaler ) { //adc kanal starten
           padc_active->cnt=0;
           ADMUX=( padc_active->mux&0x07 ) | padc_active->ref; 
