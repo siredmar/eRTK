@@ -47,9 +47,6 @@
 #include "eRTK.h"
 
 #if defined (__SAMD21J18A__)
-#include <samd21.h>
-#include <instance/mtb.h>
-#include <instance/port.h>
 
 #define IS_MTB_ENABLED \
 REG_MTB_MASTER & MTB_MASTER_EN
@@ -79,11 +76,11 @@ void InitTraceBuffer()
 
 void tskHighPrio( uint16_t param0, void *param1 ) { //prio ist 20
   while( 1 ) { //kurze aktivitaet auf prio 20 muss alles auf prio 10 sofort unterbrechen
-    eRTK_Sleep_ms( 500 );
+    eRTK_Sleep_ms( 10 );
 #if defined (__SAMD21J18A__)
     //yellow led at pb30
-	REG_PORT_DIR1|=( 1<<30 );
-	REG_PORT_OUT1^=( 1<<30 );
+	//REG_PORT_DIR1|=( 1<<30 );
+	//REG_PORT_OUT1^=( 1<<30 );
 #endif
    }
  }
@@ -115,7 +112,7 @@ void tskUART( uint16_t param0, void *param1 ) { //prio ist 10
 #else
 void tskUART( uint16_t param0, void *param1 ) { //prio ist 10
   while( 1 ) {
-	eRTK_Sleep_ms( 100 );
+	eRTK_Sleep_ms( 10 );
    }
  }
 #endif
@@ -141,7 +138,27 @@ void tskADC( uint16_t param0, void *param1 ) { //prio ist 15
 #else
 void tskADC( uint16_t param0, void *param1 ) { //prio ist 15
   while( 1 ) {
-    eRTK_Sleep_ms( 100 );
+	 asm volatile(
+	 "mov r0, #8\n"
+	 "mov r1, #9\n"
+	 "mov r2, #10\n"
+	 "mov r3, #11\n"
+	 "mov r4, #12\n"
+	 "mov r8, r0\n"
+	 "mov r9, r1\n"
+	 "mov r10, r2\n"
+	 "mov r11, r3\n"
+	 "mov r12, r4\n"
+	 "mov r0, #0\n"
+	 "mov r1, #1\n"
+	 "mov r2, #2\n"
+	 "mov r3, #3\n"
+	 "mov r4, #4\n"
+	 "mov r5, #5\n"
+	 "mov r6, #6\n"
+	 "mov r7, #7\n"
+	 );
+    eRTK_Sleep_ms( 10 );
    }
  }
 #endif
@@ -161,7 +178,8 @@ const t_eRTK_tcb rom_tcb[VANZTASK]={
 
 int main( void ) {
 #if defined (__SAMD21J18A__)
-//  InitTraceBuffer();
+  //REG_NVMCTRL_CTRLB|=( 1<<1 ); //1ws
+  InitTraceBuffer();
 #endif
 	//asmtest();
   eRTK_init();

@@ -78,8 +78,6 @@ volatile uint32_t  eRTK_cnt_overload;     //zaehlt die aufeinanderfolgenden over
 volatile uint8_t  eRTK_up;               //wird gesetzt wenn das system gestartet ist
 volatile uint8_t  eRTK_iperf;            //index im array 0..255
 
-
-
 #if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
 void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
 #ifdef ERTKDEBUG
@@ -103,12 +101,12 @@ void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
 #elif defined (__SAMD21J18A__)
 void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
 #ifdef ERTKDEBUG
-  while( 1 ) {           //
-	cli();               //cpsid i
-	++eRTK_perfcount;    //ldr	r2, [r3] / adds	r2, #1 / str	r2, [r3]
-	sei();               //cpsie i
-	oIDLEfast( 1 );      //nop nop
-   }                     //b	#-18
+  while( 1 ) {           //S=11T
+	cli();               //cpsid i 1T
+	++eRTK_perfcount;    //ldr r2, [r3] / adds r2, #1 / str	r2, [r3]  2T+1T+2T
+	sei();               //cpsie i 1T
+	oIDLEfast( 1 );
+   }                     //b	#-18 2T
 #else
   while( 1 ) {
 	set_sleep_mode( SLEEP_MODE_IDLE );
@@ -124,6 +122,7 @@ void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
 
 
 __attribute__ ((noinline)) void deadbeef( tsys reason ) {
+  oIDLE( 0 ); //this is the end...
   while( 1 );
  }
 
@@ -198,60 +197,6 @@ void * pp_stack; //speicher fuer stackpointer waehrend push/pop
   ); \
  }
  
- void asmtest( void ) {
-	 asm volatile(
-	 "mov r0, #8\n"
-	 "mov r1, #9\n"
-	 "mov r2, #10\n"
-	 "mov r3, #11\n"
-	 "mov r4, #12\n"
-	 "mov r8, r0\n"
-	 "mov r9, r1\n"
-	 "mov r10, r2\n"
-	 "mov r11, r3\n"
-	 "mov r12, r4\n"
-	 "mov r0, #0\n"
-	 "mov r1, #1\n"
-	 "mov r2, #2\n"
-	 "mov r3, #3\n"
-	 "mov r4, #4\n"
-	 "mov r5, #5\n"
-	 "mov r6, #6\n"
-	 "mov r7, #7\n"
-
-	 "push {lr}\n" \
-	 "push {r0-r7}\n" \
-	 "mov r0, r8\n" \
-	 "mov r1, r9\n" \
-	 "mov r2, r10\n" \
-	 "mov r3, r11\n" \
-	 "mov r4, r12\n" \
-	 "push { r0-r4 }\n" \
-
-	 //do some destructive things
-	 "mul r0, r0, r1\n"
-	 "mul r1, r1, r2\n"
-	 "mul r2, r2, r3\n"
-	 "mul r3, r3, r4\n"
-	 "push {r0-r3}\n"
-	 "pop  {r4-r7}\n"
-	 "mov r8, r0\n"
-	 "mov r9, r1\n"
-	 "mov r10, r2\n"
-	 "mov r11, r3\n"
-	 "mov r12, r4\n"
-	 
-	 "pop { r0-r4 }\n" \
-	 "mov r12, r4\n" \
-	 "mov r11, r3\n" \
-	 "mov r10, r2\n" \
-	 "mov r9, r1\n" \
-	 "mov r8, r0\n" \
-	 "pop { r0-r7 }\n" \
-	 "pop { pc }\n" \
-	 );
- }
-
 #endif
 
 
@@ -430,6 +375,9 @@ void eRTK_wefet( uint8_t timeout ) {
       eRTK_scheduler();
      }
    }
+#ifdef ERTKDEBUG   
+  else deadbeef( SYS_NULLTIMER ); 
+#endif  
  }
 
 void eRTK_Sleep_ms( uint16_t ms ) {
@@ -450,7 +398,7 @@ void eRTK_Sleep_ms( uint16_t ms ) {
 static uint8_t sema[ANZSEMA];
 
 static inline __attribute__((__always_inline__)) uint8_t xch ( uint8_t volatile *p, uint8_t x ) {
-  //wenn die cpu xch kennt:
+  //wenn die (AVR) cpu xch kennt:
   // __asm volatile ("xch %a1,%0" : "+r"(x) : "z"(p) : "memory");
   register uint8_t tmp;
   ATOMIC_BLOCK( ATOMIC_RESTORESTATE ) {
@@ -607,7 +555,7 @@ void eRTK_init( void ) { /* Initialisierung der Daten des Echtzeitsystems */
     //PSR program status register
     //PRIMASK
     //CONTROL
-	//r8,r9,r10,r11,r12,r0,r1,r2,r3,r4,r5,r6,r7,pc
+	//ARM Stackbelegung: r8,r9,r10,r11,r12,r0,r1,r2,r3,r4,r5,r6,r7,lr=pc
 	stack[n][ERTK_STACKSIZE-14]=8;
 	stack[n][ERTK_STACKSIZE-13]=9;
 	stack[n][ERTK_STACKSIZE-12]=10;
@@ -735,6 +683,7 @@ void SysTick_Handler( void ) {
   //asm volatile ( "mrs r0, primask\n" );
   //asm volatile ( "cpsid i" );
   eRTK_timertick();
+  //asm volatile ( "cpsie i" );
   //asm volatile ( "msr primask, r0\n" );  
  }
 
@@ -756,54 +705,3 @@ void eRTK_timer_init( void ) {
 #endif
  }
 
-
-
-
-#if eRTKTEST
-uint16_t loop1, loop2;
-void TMain1( uint16_t param0, void *param1 ) {
-  uint16_t p0=param0;
-  uint16_t p1=param1;
-  while( 1 ) {
-    uint8_t now=eRTK_GetTimer();
-    uint32_t cnt;
-    for( cnt=0; cnt<1000; cnt++ );
-    eRTK_WaitUntil( now+10 );
-   }
-  while( 0 ) {
-    eRTK_get_sema( 0 );
-    write0( ( uint8_t* )"1234567890", 10 );
-    eRTK_free_sema( 0 );
-   }
-  while( 1 ) {
-  	char tmp[100];
-    strcpy( tmp, "12345678901234567890123456789012345678901234567890" );
-   }
-  while( 1 ) {
-    eRTK_wefet( 1 );
-    ++loop1;
-    eRTK_wefet( 1 );
-    --loop1;
-   }
- }
-
-void TMain2( uint16_t param0, void *param1 ) {
-  uint16_t p0=param0;
-  uint16_t p1=param1;
-  while( 0 ) {
-    eRTK_get_sema( 0 );
-    write0( ( uint8_t* )"abcdefghij", 10 );
-    eRTK_free_sema( 0 );
-   }
-  while( 1 ) {
-	  char tmp[100];
-	  strcpy( tmp, "abcdefghijklabcdefghijklabcdefghijklabcdefghijkl" );
-   }
-  while( 1 ) {
-    eRTK_wefet( 1 );
-    ++loop2;
-    eRTK_wefet( 1 );
-    --loop2;
-   }
- }
-#endif
