@@ -8,30 +8,35 @@
 #include <stdio.h>
 
 #if defined (__AVR_ATmega2560__)
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <avr/sleep.h>
-#include <avr/wdt.h>
-#include "AVR/adc.h"
+  #include <avr/io.h>
+  #include <avr/interrupt.h>
+  #include <avr/sleep.h>
+  #include <avr/wdt.h>
+  #include "AVR/adc.h"
+#elif defined (__SAMD21J18A__)
+  //arm cortex nvic systimer register on SAMD21
+  #define NVIC_SYSTICK_CTRL		( ( volatile uint32_t *) 0xe000e010 )
+  #define NVIC_SYSTICK_LOAD		( ( volatile uint32_t *) 0xe000e014 )
+  #define NVIC_SYSTICK_CLK		4
+  #define NVIC_SYSTICK_INT		2
+  #define NVIC_SYSTICK_ENABLE	1
 #endif
 
-#ifdef __SAMD21J18A__
-#endif
-
+#include "eRTK_config.h"
 #include "eRTK.h"
 
 #if defined (__AVR_ATmega2560__) ||(__AVR_ATxmega384C3__)
-#ifdef ERTK_DEBUG
-uint8_t stack[VANZTASK+1][ERTK_STACKSIZE]  __attribute__ ((aligned (256)));  /* Jede Task hat Stack a' STACKSIZE Byte */
-#else
-uint8_t stack[VANZTASK+1][ERTK_STACKSIZE];  /* Jede Task hat Stack a' STACKSIZE Byte */
-#endif
+  #ifdef ERTK_DEBUG
+    uint8_t stack[VANZTASK+1][ERTK_STACKSIZE]  __attribute__ ((aligned (256)));  /* Jede Task hat einen Stack a' STACKSIZE Byte */
+  #else
+    uint8_t stack[VANZTASK+1][ERTK_STACKSIZE];  /* Jede Task hat Stack a' STACKSIZE Byte */
+  #endif
 #elif defined (__SAMD21J18A__)
-#ifdef ERTK_DEBUG
-uint32_t stack[VANZTASK+1][ERTK_STACKSIZE]  __attribute__ ((aligned (4096)));  /* Jede Task hat Stack a' STACKSIZE words */
-#else
-uint32_t stack[VANZTASK+1][ERTK_STACKSIZE];  /* Jede Task hat Stack a' STACKSIZE words */
-#endif
+  #ifdef ERTK_DEBUG
+    uint32_t stack[VANZTASK+1][ERTK_STACKSIZE]  __attribute__ ((aligned (4096)));  /* Jede Task hat einen Stack a' STACKSIZE words */
+  #else
+    uint32_t stack[VANZTASK+1][ERTK_STACKSIZE];  /* Jede Task hat Stack a' STACKSIZE words */
+  #endif
 #endif
 
 void * stackptr[VANZTASK+1]; /* Ablage fuer Stackpointer der Tasks */
@@ -203,6 +208,10 @@ void * pp_stack; //speicher fuer stackpointer waehrend push/pop
 
 void __attribute__ ((naked)) eRTK_scheduler( void ) { /* start der hoechstprioren ready task, oder idle task, oder der b�ffel wenn alles scheitert ;) */
   push();
+#ifdef ERTK_DEBUG
+  //stack overflow check, stack pointer in pp_stack uebergeben
+  if( pp_stack < ( void * )&stack[akttask][ERTK_STACKSIZE-ERTK_STACKLOWMARK] ) deadbeef( SYS_STACKOVERFLOW );
+#endif
   stackptr[akttask]=pp_stack;
 //pop();
   //
@@ -625,20 +634,20 @@ void
 #endif
 eRTK_timertick( void ) { 
   oIDLE( 0 );
-#ifdef ERTK_DEBUG
-  //stack overflow check, stack pointer in pp_stack uebergeben
-  #if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
-    asm volatile( "in r0, __SP_L__ \n" );
-    asm volatile( "sts pp_stack, r0 \n" );
-    asm volatile( "in r0, __SP_H__ \n" );
-    asm volatile( "sts pp_stack+1, r0 \n" );
-  #elif defined (__SAMD21J18A__)
-    asm volatile ( "mrs r0, msp \n" );
-    asm volatile ( "ldr r1, =pp_stack \n" );
-    asm volatile ( "str r0, [ r1 ] \n" );
-  #endif
-  if( pp_stack < ( void * )&stack[akttask][ERTK_STACKSIZE-ERTK_STACKLOWMARK] ) deadbeef( SYS_STACKOVERFLOW );
-#endif  
+//#ifdef ERTK_DEBUG
+//  //stack overflow check, stack pointer in pp_stack uebergeben
+//  #if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
+//    asm volatile( "in r0, __SP_L__ \n" );
+//    asm volatile( "sts pp_stack, r0 \n" );
+//    asm volatile( "in r0, __SP_H__ \n" );
+//    asm volatile( "sts pp_stack+1, r0 \n" );
+//  #elif defined (__SAMD21J18A__)
+//    asm volatile ( "mrs r0, msp \n" );
+//    asm volatile ( "ldr r1, =pp_stack \n" );
+//    asm volatile ( "str r0, [ r1 ] \n" );
+//  #endif
+//  if( pp_stack < ( void * )&stack[akttask][ERTK_STACKSIZE-ERTK_STACKLOWMARK] ) deadbeef( SYS_STACKOVERFLOW );
+//#endif  
   if( eRTK_ticks<65535u ) ++eRTK_ticks;
   ++eRTK_m_timer.timer16;
   register s_tcd *p=tcd;
