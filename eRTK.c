@@ -63,30 +63,32 @@ s_tcd * pTaskRdy;         /* einfache verkettung aller ready tasks ueber tcd.nex
   1000 -> leerlauf
    900 -> 100*16=1600 zyklen wurden anderweitig verbraucht (in diesem 1ms intervall)
 */
-#if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
-volatile uint16_t eRTK_perfcount;        //aktueller counter
-volatile uint16_t eRTK_perfcounter[256]; //counter array der letzen 256ms
-volatile uint16_t eRTK_ticks;            //wie spaet ist es nach dem urknall in ms
-volatile uint8_t  eRTK_cnt_overload;     //zaehlt die aufeinanderfolgenden overload phasen
-#elif defined (__SAMD21J18A__)
-volatile uint32_t eRTK_perfcount;        //aktueller counter
-volatile uint32_t eRTK_perfcounter[256]; //counter array der letzen 256ms
-volatile uint32_t eRTK_ticks;            //wie spaet ist es nach dem urknall in ms
-volatile uint32_t  eRTK_cnt_overload;     //zaehlt die aufeinanderfolgenden overload phasen
+#ifdef ERTK_DEBUG
+  #if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
+    volatile uint16_t eRTK_perfcount;        //aktueller counter
+    volatile uint16_t eRTK_perfcounter[256]; //counter array der letzen 256ms
+    volatile uint16_t eRTK_ticks;            //wie spaet ist es nach dem urknall in ms
+    volatile uint8_t  eRTK_cnt_overload;     //zaehlt die aufeinanderfolgenden overload phasen
+  #elif defined (__SAMD21J18A__)
+    volatile uint32_t eRTK_perfcount;        //aktueller counter
+    volatile uint32_t eRTK_perfcounter[256]; //counter array der letzen 256ms
+    volatile uint32_t eRTK_ticks;            //wie spaet ist es nach dem urknall in ms
+    volatile uint32_t  eRTK_cnt_overload;    //zaehlt die aufeinanderfolgenden overload phasen
+  #endif
+  volatile uint8_t  eRTK_up;                 //wird gesetzt wenn das system gestartet ist
+  volatile uint8_t  eRTK_iperf;              //index im array 0..255
 #endif
-volatile uint8_t  eRTK_up;               //wird gesetzt wenn das system gestartet ist
-volatile uint8_t  eRTK_iperf;            //index im array 0..255
 
 #if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
 void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
-#ifdef ERTK_DEBUG
+  #ifdef ERTK_DEBUG
   while( 1 ) {           //14+2=16 cycles pro loop -> 16MHz -> 1000 inc/ms
     cli();               //cli=1clock
     ++eRTK_perfcount;    //lds,lds,adiw,sts,sts=5x2clocks
     sei();               //sei=1clock
     oIDLEfast( 1 );      //2 cycles fuer 2xnop oder ein output bit setzen
    }                     //rjmp=2clocks
-#else
+  #else
   while( 1 ) {
     set_sleep_mode( SLEEP_MODE_IDLE );
     sleep_enable();
@@ -95,18 +97,18 @@ void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
     sleep_cpu();
     sleep_disable();
    }
-#endif
+  #endif
  }
 #elif defined (__SAMD21J18A__)
 void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
-#ifdef ERTK_DEBUG
-  while( 1 ) {           //S=11T
+  #ifdef ERTK_DEBUG
+  while( 1 ) {           //S=14T
 	cli();               //cpsid i 1T
 	++eRTK_perfcount;    //ldr r2, [r3] / adds r2, #1 / str	r2, [r3]  2T+1T+2T
 	sei();               //cpsie i 1T
-	oIDLEfast( 1 );
+	oIDLEfast( 1 );      //ldr	r1, [r3] / orrs	r1, r0 / str	r1, [r3]   2T+1T+2T
    }                     //b	#-18 2T
-#else
+  #else
   while( 1 ) {
 	set_sleep_mode( SLEEP_MODE_IDLE );
 	sleep_enable();
@@ -115,7 +117,7 @@ void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
 	sleep_cpu();
 	sleep_disable();
    }
-#endif
+  #endif
  }
 #endif
 
@@ -649,6 +651,7 @@ eRTK_timertick( void ) {
      }
     ++p;
    }
+#ifdef ERTK_DEBUG   
   if( eRTK_up && eRTK_ticks>eRTK_STARTUP_MS ) { //solange geben wir dem system zum hochlauf
     eRTK_perfcounter[ ( eRTK_iperf++ )/*&0x0f*/ ]=eRTK_perfcount;
     if( eRTK_perfcount<1 ) {
@@ -658,6 +661,7 @@ eRTK_timertick( void ) {
     else eRTK_cnt_overload=0;
     eRTK_perfcount=0;
    }
+#endif   
   if( eRTK_up ) eRTK_scheduler();
  }
 
