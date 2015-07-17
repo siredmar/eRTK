@@ -6,7 +6,11 @@ please read the wiki too.
 
 To learn what a (R)eal (T)ime (K)ernel is please visit https://en.wikipedia.org/wiki/Real-time_operating_system
 
-The project directory subdir AVR/ holds the ATmega and ATxmega Atmelstudio project.
+Until now this code is running on Atmel AVR and ARM Cortex Hardware,
+it is tested on Atmega2560/Atxmega384 and SAM21J18A specific (Atxmega in Simulator only).
+
+The project directory subdir AVR/ holds the ATmega and ATxmega Atmelstudio project,
+gcc is the recommended compiler toolchain.
 
 In SAMD21/ the Atmelstudio projekt for SAMD21 is found with its machine setup files and some test code.
 
