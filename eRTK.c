@@ -21,13 +21,13 @@
 #include "eRTK.h"
 
 #if defined (__AVR_ATmega2560__) ||(__AVR_ATxmega384C3__)
-#ifdef ERTKDEBUG
+#ifdef ERTK_DEBUG
 uint8_t stack[VANZTASK+1][ERTK_STACKSIZE]  __attribute__ ((aligned (256)));  /* Jede Task hat Stack a' STACKSIZE Byte */
 #else
 uint8_t stack[VANZTASK+1][ERTK_STACKSIZE];  /* Jede Task hat Stack a' STACKSIZE Byte */
 #endif
 #elif defined (__SAMD21J18A__)
-#ifdef ERTKDEBUG
+#ifdef ERTK_DEBUG
 uint32_t stack[VANZTASK+1][ERTK_STACKSIZE]  __attribute__ ((aligned (4096)));  /* Jede Task hat Stack a' STACKSIZE words */
 #else
 uint32_t stack[VANZTASK+1][ERTK_STACKSIZE];  /* Jede Task hat Stack a' STACKSIZE words */
@@ -62,7 +62,6 @@ s_tcd * pTaskRdy;         /* einfache verkettung aller ready tasks ueber tcd.nex
   je mehr systemlast um so kleiner der zaehlerstand.
   1000 -> leerlauf
    900 -> 100*16=1600 zyklen wurden anderweitig verbraucht (in diesem 1ms intervall)
-  ! z.b. lcd_clear_area() braucht mehr als 10ms !
 */
 #if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
 volatile uint16_t eRTK_perfcount;        //aktueller counter
@@ -80,7 +79,7 @@ volatile uint8_t  eRTK_iperf;            //index im array 0..255
 
 #if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
 void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
-#ifdef ERTKDEBUG
+#ifdef ERTK_DEBUG
   while( 1 ) {           //14+2=16 cycles pro loop -> 16MHz -> 1000 inc/ms
     cli();               //cli=1clock
     ++eRTK_perfcount;    //lds,lds,adiw,sts,sts=5x2clocks
@@ -100,7 +99,7 @@ void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
  }
 #elif defined (__SAMD21J18A__)
 void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
-#ifdef ERTKDEBUG
+#ifdef ERTK_DEBUG
   while( 1 ) {           //S=11T
 	cli();               //cpsid i 1T
 	++eRTK_perfcount;    //ldr r2, [r3] / adds r2, #1 / str	r2, [r3]  2T+1T+2T
@@ -122,8 +121,8 @@ void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
 
 
 __attribute__ ((noinline)) void deadbeef( tsys reason ) {
-  oIDLE( 0 ); //this is the end...
-  while( 1 );
+  oIDLE( 0 ); 
+  while( 1 ); //this is the end...
  }
 
 
@@ -200,14 +199,14 @@ void * pp_stack; //speicher fuer stackpointer waehrend push/pop
 #endif
 
 
-void __attribute__ ((naked)) eRTK_scheduler( void ) { /* start der hoechstprioren ready task, oder idle task, oder der büffel wenn alles scheitert ;) */
+void __attribute__ ((naked)) eRTK_scheduler( void ) { /* start der hoechstprioren ready task, oder idle task, oder der bï¿½ffel wenn alles scheitert ;) */
   push();
   stackptr[akttask]=pp_stack;
 //pop();
   //
   if( pTaskRdy ) { //da muss natuerlich immer was drinstehen ;)
     //do round robin bei mehreren mit gleicher prio
-    s_tcd *p=pTaskRdy;
+    register s_tcd *p=pTaskRdy;
     while( p->tid != akttask ) {
       p=p->pnext; //finde aktuelle task
       if( !p ) break;
@@ -375,7 +374,7 @@ void eRTK_wefet( uint8_t timeout ) {
       eRTK_scheduler();
      }
    }
-#ifdef ERTKDEBUG   
+#ifdef ERTK_DEBUG   
   else deadbeef( SYS_NULLTIMER ); 
 #endif  
  }
@@ -544,7 +543,7 @@ void eRTK_init( void ) { /* Initialisierung der Daten des Echtzeitsystems */
     //
     stackptr[n]=&stack[n][ERTK_STACKSIZE-40];
    }
-  #elif defined (__SAMD21J18A__)
+#elif defined (__SAMD21J18A__)
   for( n=0; n<VANZTASK+1; n++ ) { /* SP der Tasks auf jeweiliges Stackende setzen */
     for( int f=0; f<ERTK_STACKSIZE; f++ ) stack[n][f]=0xdeadbeef;
     //cortex m0+ arm thumb register set
@@ -573,7 +572,7 @@ void eRTK_init( void ) { /* Initialisierung der Daten des Echtzeitsystems */
     else stack[n][ERTK_STACKSIZE-1]=( unsigned )eRTK_Idle;
 	stackptr[n]=&stack[n][ERTK_STACKSIZE-14];
    }
-  #endif 
+#endif 
   sema_init();
  }
 
@@ -618,17 +617,31 @@ void eRTK_cpri( uint8_t tid, uint8_t prio, uint8_t schedule_immediately ) {
  }
 
 #if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
-__inline__ void __attribute__ ( ( always_inline ) ) 
+__inline__ void __attribute__ ( ( always_inline ) ) //damit im irq alle register gesichert werden
 #elif defined (__SAMD21J18A__)
 void 
 #endif
-eRTK_timertick( void ) { //damit im irq alle register gesichert werden
+eRTK_timertick( void ) { 
   oIDLE( 0 );
+#ifdef ERTK_DEBUG
+  //stack overflow check, stack pointer in pp_stack uebergeben
+  #if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
+    asm volatile( "in r0, __SP_L__ \n" );
+    asm volatile( "sts pp_stack, r0 \n" );
+    asm volatile( "in r0, __SP_H__ \n" );
+    asm volatile( "sts pp_stack+1, r0 \n" );
+  #elif defined (__SAMD21J18A__)
+    asm volatile ( "mrs r0, msp \n" );
+    asm volatile ( "ldr r1, =pp_stack \n" );
+    asm volatile ( "str r0, [ r1 ] \n" );
+  #endif
+  if( pp_stack < ( void * )&stack[akttask][ERTK_STACKSIZE-ERTK_STACKLOWMARK] ) deadbeef( SYS_STACKOVERFLOW );
+#endif  
   if( eRTK_ticks<65535u ) ++eRTK_ticks;
   ++eRTK_m_timer.timer16;
-  s_tcd *p=tcd;
+  register s_tcd *p=tcd;
   //timer service
-  for( uint8_t n=0; n<VANZTASK+1; n++ ) {
+  for( register uint8_t n=0; n<VANZTASK+1; n++ ) {
     if( p->timer ) {
       if( !--p->timer ) {
         eRTK_SetReady( p->tid );

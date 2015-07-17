@@ -38,13 +38,15 @@
   //#define F_CPU       48000000           //maximum
  #endif
 
+#define ERTK_DEBUG                     //gibt ein paar mehr infos zum debugging, kostet aber laufzeit
+
 #define eRTKHZ            1000         //system tick rate in HZ
 
 #define VANZTASK             6         //anzahl definierter prozesse
 
 #define ERTK_STACKSIZE     256         //stack in byte bei 8 bit bzw. word bei 32 bit maschinen
+#define ERTK_STACKLOWMARK  240         //wenn debug aktiviert wird auf unterschreitung dieser marke geprueft
 
-#define ERTKDEBUG                      //gibt ein paar mehr infos zum debugging
 
 #define IDLELED                        //led in idle task ansteuern oder nichts machen
 
@@ -87,7 +89,7 @@
 #endif
 
 //gruende fuer den toten bueffel
-typedef enum { SYS_NOTASK, SYS_NULLPTR, SYS_NULLTIMER, SYS_OVERLOAD, SYS_VERIFY, SYS_UNKNOWN } tsys; 
+typedef enum { SYS_NOTASK, SYS_NULLPTR, SYS_NULLTIMER, SYS_OVERLOAD, SYS_VERIFY, SYS_STACKOVERFLOW, SYS_UNKNOWN } tsys; 
 void deadbeef( tsys reason );              //allgemeine fehler routine
 
 
