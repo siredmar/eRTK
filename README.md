@@ -14,7 +14,7 @@ Overall principle ist "highest priority task always runs",
 
 if no one is ready at a certain point of time the so called "idle task" wil be activated which only does one thing, 
 
-count up a variable in debug mode ore do nothing (and save energy) in production code.
+count up a variable in debug mode for measureing cpu free time ore do nothing (and save energy) in production code.
 
 Until now this code is running on Atmel AVR and ARM Cortex Hardware,
 it is tested on Atmega2560/Atxmega384 and SAM21J18A specific (Atxmega in Simulator only).
@@ -41,9 +41,9 @@ After setting up plls,clock and so on call these
 
 and the system should be started up, highest priority ready state task should be running.
 
-Using a similar ATmega, ATxmega or Cortex M0+ CPU is possible too, 
+Using a similar ATmega, ATxmega or Cortex M0+ or Mx CPU is possible too, 
 
-try to adapt the #defines to your machine type.
+try to adopt the #defines to your machine type.
 
 AT(x)mega special: 
 
