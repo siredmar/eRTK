@@ -6,6 +6,16 @@ please read the wiki too.
 
 To learn what a (R)eal (T)ime (K)ernel is please visit https://en.wikipedia.org/wiki/Real-time_operating_system
 
+This is a Real Time Kernel with dynamic priorities for tasks and it allows cooperation of tasks or preemptive scheduling.
+
+Each task has a priority and can decide to run or to suspend the cpu to others who are ready to run.
+
+Overall principle ist "highest priority task always runs", 
+
+if no one is ready at a certain point of time the so called "idle task" wil be activated which only does one thing, 
+
+count up a variable in debug mode ore do nothing (and save energy) in production code.
+
 Until now this code is running on Atmel AVR and ARM Cortex Hardware,
 it is tested on Atmega2560/Atxmega384 and SAM21J18A specific (Atxmega in Simulator only).
 
