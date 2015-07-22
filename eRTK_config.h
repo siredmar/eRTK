@@ -11,15 +11,19 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <limits.h>
+
 #if defined (__AVR_ATmega2560__)|(__AVR_ATxmega384C3__)
   #include <avr/io.h>
   #include <util/atomic.h>
   #include <avr/interrupt.h>
+  typedef uint8_t eRTK_TYPE;
 #elif defined (__SAMD21J18A__)
   #include <samd21.h>
   #include <instance/mtb.h>
   #include <instance/port.h>
   #include "SAMD21/cortex-atomic.h"
+  typedef uint32_t eRTK_TYPE;
 #endif
 
 #if defined (__AVR_ATmega2560__)

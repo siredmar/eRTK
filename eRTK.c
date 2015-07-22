@@ -666,7 +666,7 @@ eRTK_timertick( void ) {
 //    asm volatile ( "str r0, [ r1 ] \n" );
 //  #endif
 //  if( pp_stack < ( void * )&stack[akttask][ERTK_STACKSIZE-ERTK_STACKLOWMARK] ) deadbeef( SYS_STACKOVERFLOW );
-//#endif  
+#endif  
   if( eRTK_ticks<UINT_MAX ) ++eRTK_ticks;
 #if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
   ++eRTK_m_timer.timer16;

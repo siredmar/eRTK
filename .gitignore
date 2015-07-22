@@ -1,3 +1,6 @@
 Debug*/
 *.pdf
 doc/
+
+eRTK.c.orig
+eRTK.h.orig
