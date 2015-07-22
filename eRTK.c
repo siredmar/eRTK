@@ -9,30 +9,35 @@
 
 
 #if defined (__AVR_ATmega2560__)|(__AVR_ATxmega384C3__)
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <avr/sleep.h>
-#include <avr/wdt.h>
-#include "AVR/adc.h"
+  #include <avr/io.h>
+  #include <avr/interrupt.h>
+  #include <avr/sleep.h>
+  #include <avr/wdt.h>
+  #include "AVR/adc.h"
+#elif defined (__SAMD21J18A__)
+  //arm cortex nvic systimer register on SAMD21
+  #define NVIC_SYSTICK_CTRL		( ( volatile uint32_t *) 0xe000e010 )
+  #define NVIC_SYSTICK_LOAD		( ( volatile uint32_t *) 0xe000e014 )
+  #define NVIC_SYSTICK_CLK		4
+  #define NVIC_SYSTICK_INT		2
+  #define NVIC_SYSTICK_ENABLE	1
 #endif
 
-#ifdef __SAMD21J18A__
-#endif
-
+#include "eRTK_config.h"
 #include "eRTK.h"
 
 #if defined (__AVR_ATmega2560__) ||(__AVR_ATxmega384C3__)
-#ifdef ERTK_DEBUG
-uint8_t stack[VANZTASK+1][ERTK_STACKSIZE]  __attribute__ ((aligned (256)));  /* Jede Task hat Stack a' STACKSIZE Byte */
-#else
-uint8_t stack[VANZTASK+1][ERTK_STACKSIZE];  /* Jede Task hat Stack a' STACKSIZE Byte */
-#endif
+  #ifdef ERTK_DEBUG
+    uint8_t stack[VANZTASK+1][ERTK_STACKSIZE]  __attribute__ ((aligned (256)));  /* Jede Task hat einen Stack a' STACKSIZE Byte */
+  #else
+    uint8_t stack[VANZTASK+1][ERTK_STACKSIZE];  /* Jede Task hat Stack a' STACKSIZE Byte */
+  #endif
 #elif defined (__SAMD21J18A__)
-#ifdef ERTK_DEBUG
-uint32_t stack[VANZTASK+1][ERTK_STACKSIZE]  __attribute__ ((aligned (4096)));  /* Jede Task hat Stack a' STACKSIZE words */
-#else
-uint32_t stack[VANZTASK+1][ERTK_STACKSIZE];  /* Jede Task hat Stack a' STACKSIZE words */
-#endif
+  #ifdef ERTK_DEBUG
+    uint32_t stack[VANZTASK+1][ERTK_STACKSIZE]  __attribute__ ((aligned (4096)));  /* Jede Task hat einen Stack a' STACKSIZE words */
+  #else
+    uint32_t stack[VANZTASK+1][ERTK_STACKSIZE];  /* Jede Task hat Stack a' STACKSIZE words */
+  #endif
 #endif
 
 void * stackptr[VANZTASK+1]; /* Ablage fuer Stackpointer der Tasks */
@@ -188,7 +193,7 @@ void * pp_stack; //speicher fuer stackpointer waehrend push/pop
   "ldr r0, =pp_stack \n"    /*zeiger auf pp_stack */     \
   "ldr r0, [ r0 ] \n"       /*inhalt pp_stack */         \
   "msr msp, r0 \n"          /*speichere pp_stack in msp*/\
-  "cpsie i \n"              /*sperre interruts */        \
+  "cpsie i \n"              /*sperre interrupts */       \
   "pop { r0-r4 } \n"        /*hole r8-r12*/              \
   "mov r8, r0 \n" \
   "mov r9, r1 \n" \
@@ -202,7 +207,7 @@ void * pp_stack; //speicher fuer stackpointer waehrend push/pop
 #endif
 
 
-void __attribute__ ((naked)) eRTK_scheduler( void ) { /* start der hoechstprioren ready task, oder idle task, oder der b�ffel wenn alles scheitert ;) */
+void __attribute__ ((naked)) eRTK_scheduler( void ) { /* start der hoechstprioren ready task, oder idle task, oder der bueffel wenn alles scheitert ;) */
   push();
 #ifdef ERTK_DEBUG 
   //stack overflow check, stack pointer in pp_stack uebergeben
@@ -231,7 +236,9 @@ void __attribute__ ((naked)) eRTK_scheduler( void ) { /* start der hoechstpriore
         akttask=pTaskRdy->tid;
        }
      }
-    else akttask=pTaskRdy->tid; //nimm das erstbeste aus der ready liste ;)
+    else {
+      akttask=pTaskRdy->tid; //nimm das erstbeste aus der ready liste ;)
+     }
    }
   else deadbeef( SYS_NOTASK );
   //
@@ -562,23 +569,23 @@ void eRTK_init( void ) { /* Initialisierung der Daten des Echtzeitsystems */
     //PSR program status register
     //PRIMASK
     //CONTROL
-	//ARM Stackbelegung: r8,r9,r10,r11,r12,r0,r1,r2,r3,r4,r5,r6,r7,lr=pc
-	stack[n][ERTK_STACKSIZE-14]=8;
-	stack[n][ERTK_STACKSIZE-13]=9;
-	stack[n][ERTK_STACKSIZE-12]=10;
-	stack[n][ERTK_STACKSIZE-11]=11;
-	stack[n][ERTK_STACKSIZE-10]=12;
-	stack[n][ERTK_STACKSIZE-9]=0;
-	stack[n][ERTK_STACKSIZE-8]=1;
-	stack[n][ERTK_STACKSIZE-7]=2;
-	stack[n][ERTK_STACKSIZE-6]=3;
-	stack[n][ERTK_STACKSIZE-5]=4;
-	stack[n][ERTK_STACKSIZE-4]=5;
-	stack[n][ERTK_STACKSIZE-3]=6;
-	stack[n][ERTK_STACKSIZE-2]=7;
+	  //ARM Stackbelegung: r8,r9,r10,r11,r12,r0,r1,r2,r3,r4,r5,r6,r7,lr=pc
+    stack[n][ERTK_STACKSIZE-14]=8;
+    stack[n][ERTK_STACKSIZE-13]=9;
+    stack[n][ERTK_STACKSIZE-12]=10;
+    stack[n][ERTK_STACKSIZE-11]=11;
+    stack[n][ERTK_STACKSIZE-10]=12;
+    stack[n][ERTK_STACKSIZE-9]=0;
+    stack[n][ERTK_STACKSIZE-8]=1;
+    stack[n][ERTK_STACKSIZE-7]=2;
+    stack[n][ERTK_STACKSIZE-6]=3;
+    stack[n][ERTK_STACKSIZE-5]=4;
+    stack[n][ERTK_STACKSIZE-4]=5;
+    stack[n][ERTK_STACKSIZE-3]=6;
+    stack[n][ERTK_STACKSIZE-2]=7;
     if( n ) stack[n][ERTK_STACKSIZE-1]=( unsigned )rom_tcb[n-1].task;
     else stack[n][ERTK_STACKSIZE-1]=( unsigned )eRTK_Idle;
-	stackptr[n]=&stack[n][ERTK_STACKSIZE-14];
+    stackptr[n]=&stack[n][ERTK_STACKSIZE-14];
    }
 #endif 
   sema_init();
@@ -647,19 +654,19 @@ void
 eRTK_timertick( void ) { 
   oIDLE( 0 );
 #if 0
-  //stack overflow check, stack pointer in pp_stack uebergeben
-  #if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
-    asm volatile( "in r0, __SP_L__ \n" );
-    asm volatile( "sts pp_stack, r0 \n" );
-    asm volatile( "in r0, __SP_H__ \n" );
-    asm volatile( "sts pp_stack+1, r0 \n" );
-  #elif defined (__SAMD21J18A__)
-    asm volatile ( "mrs r0, msp \n" );
-    asm volatile ( "ldr r1, =pp_stack \n" );
-    asm volatile ( "str r0, [ r1 ] \n" );
-  #endif
-  if( pp_stack < ( void * )&stack[akttask][ERTK_STACKSIZE-ERTK_STACKLOWMARK] ) deadbeef( SYS_STACKOVERFLOW );
-#endif  
+//  //stack overflow check, stack pointer in pp_stack uebergeben
+//  #if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
+//    asm volatile( "in r0, __SP_L__ \n" );
+//    asm volatile( "sts pp_stack, r0 \n" );
+//    asm volatile( "in r0, __SP_H__ \n" );
+//    asm volatile( "sts pp_stack+1, r0 \n" );
+//  #elif defined (__SAMD21J18A__)
+//    asm volatile ( "mrs r0, msp \n" );
+//    asm volatile ( "ldr r1, =pp_stack \n" );
+//    asm volatile ( "str r0, [ r1 ] \n" );
+//  #endif
+//  if( pp_stack < ( void * )&stack[akttask][ERTK_STACKSIZE-ERTK_STACKLOWMARK] ) deadbeef( SYS_STACKOVERFLOW );
+//#endif  
   if( eRTK_ticks<UINT_MAX ) ++eRTK_ticks;
 #if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
   ++eRTK_m_timer.timer16;

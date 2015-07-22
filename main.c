@@ -6,7 +6,7 @@
  */ 
 
 /*
-  Dies ist ein Beispiel der Anwendung und ein Test des Betriebssystems.
+  Dies ist ein Beispiel der Anwendung und ein Test des Betriebssystems auf AVR (atmega256).
   Es werden 5 Tasks definiert, eine mit hoher Prioritaet und 4 mit niedrigerer Prioritaet.
   Die Task mit hoher Prio macht nichts anderes als zyklisch alle 10ms wieder zu starten, 
   in der Zwischenzeit suspendiert sie sich.
@@ -32,46 +32,38 @@
 	Mit diesem Beispiel erreiche ich um 930 Zaehler, also etwa 7% der Zeit ist die CPU in den Tasks unterwegs, 
 	der Rest ist Leerlauf.
 	Das bei einer Interruptbelastung von 1000Hz vom Systemtimer und 8 seriellen Sende- und Empfangsinterrupts
-	mit jeweils 2000Hz bei 19200Bd und 3x1000Hz bei 9600Bd ein gutes Ergebnis !
-	
-	14.05.2005  T. Erdmann t-erdmann@web.de 
+	mit jeweils 2000Hz bei 19200Bd und 3x1000Hz bei 9600Bd ein gutes Ergebnis ! 
 */
 
 #if defined (__AVR_ATmega2560__)
-#include <avr/io.h>
-#include "AVR/uart.h"
-#include "AVR/adc.h"
+  #include <avr/io.h>
+  #include "AVR/uart.h"
+  #include "AVR/adc.h"
 #endif
 
 #include <stdio.h>
+#include "eRTK_config.h"
 #include "eRTK.h"
 
 #if defined (__SAMD21J18A__)
+  #define IS_MTB_ENABLED REG_MTB_MASTER & MTB_MASTER_EN
+  #define DISABLE_MTB REG_MTB_MASTER = REG_MTB_MASTER & ~MTB_MASTER_EN
+  #define ENABLE_MTB REG_MTB_MASTER = REG_MTB_MASTER | MTB_MASTER_EN
 
-#define IS_MTB_ENABLED \
-REG_MTB_MASTER & MTB_MASTER_EN
-#define DISABLE_MTB \
-REG_MTB_MASTER = REG_MTB_MASTER & ~MTB_MASTER_EN
-#define ENABLE_MTB \
-REG_MTB_MASTER = REG_MTB_MASTER | MTB_MASTER_EN
+  __attribute__((aligned(128))) volatile char __tracebuffer__[128];
 
-__attribute__((aligned(128)))
-volatile char __tracebuffer__[128];
-volatile int __tracebuffersize__ = sizeof(__tracebuffer__);
-void InitTraceBuffer()
-{
-	int index = 0;
-	uint32_t mtbEnabled = IS_MTB_ENABLED;
-	DISABLE_MTB;
-	for(index =0; index<128; index++)
-	{
-		__tracebuffer__[index];
-		__tracebuffersize__;
-	}
-	if(mtbEnabled)
-	ENABLE_MTB;
-}
+  volatile int __tracebuffersize__ = sizeof(__tracebuffer__);
 
+  void InitTraceBuffer() {
+    int index = 0;
+    uint32_t mtbEnabled = IS_MTB_ENABLED;
+    DISABLE_MTB;
+    for(index =0; index<128; index++) {
+      __tracebuffer__[index];
+      __tracebuffersize__;
+     }
+    if( mtbEnabled ) ENABLE_MTB;
+   }
 #endif
 
 void tskHighPrio( uint16_t param0, void *param1 ) { //prio ist 20
@@ -79,8 +71,8 @@ void tskHighPrio( uint16_t param0, void *param1 ) { //prio ist 20
     eRTK_Sleep_ms( 10 );
 #if defined (__SAMD21J18A__)
     //yellow led at pb30
-	//REG_PORT_DIR1|=( 1<<30 );
-	//REG_PORT_OUT1^=( 1<<30 );
+	  //REG_PORT_DIR1|=( 1<<30 );
+	  //REG_PORT_OUT1^=( 1<<30 );
 #endif
    }
  }
@@ -112,12 +104,9 @@ void tskUART( uint16_t param0, void *param1 ) { //prio ist 10
 #else
 void tskUART( uint16_t param0, void *param1 ) { //prio ist 10
   while( 1 ) {
-	eRTK_Sleep_ms( 10 );
+    eRTK_Sleep_ms( 10 );
    }
  }
-#endif
-
-#if defined (__AVR_ATxmega384C3__)
 #endif
 
 #if defined (__AVR_ATmega2560__)
@@ -138,32 +127,29 @@ void tskADC( uint16_t param0, void *param1 ) { //prio ist 15
 #else
 void tskADC( uint16_t param0, void *param1 ) { //prio ist 15
   while( 1 ) {
-	 asm volatile(
-	 "mov r0, #8\n"
-	 "mov r1, #9\n"
-	 "mov r2, #10\n"
-	 "mov r3, #11\n"
-	 "mov r4, #12\n"
-	 "mov r8, r0\n"
-	 "mov r9, r1\n"
-	 "mov r10, r2\n"
-	 "mov r11, r3\n"
-	 "mov r12, r4\n"
-	 "mov r0, #0\n"
-	 "mov r1, #1\n"
-	 "mov r2, #2\n"
-	 "mov r3, #3\n"
-	 "mov r4, #4\n"
-	 "mov r5, #5\n"
-	 "mov r6, #6\n"
-	 "mov r7, #7\n"
-	 );
-    eRTK_Sleep_ms( 10 );
+    asm volatile(
+    "mov r0, #8\n"
+    "mov r1, #9\n"
+    "mov r2, #10\n"
+    "mov r3, #11\n"
+    "mov r4, #12\n"
+    "mov r8, r0\n"
+    "mov r9, r1\n"
+    "mov r10, r2\n"
+    "mov r11, r3\n"
+    "mov r12, r4\n"
+    "mov r0, #0\n"
+    "mov r1, #1\n"
+    "mov r2, #2\n"
+    "mov r3, #3\n"
+    "mov r4, #4\n"
+    "mov r5, #5\n"
+    "mov r6, #6\n"
+    "mov r7, #7\n"
+    );
+   eRTK_Sleep_ms( 10 );
    }
  }
-#endif
-
-#if defined (__AVR_ATxmega384C3__)
 #endif
 
 const t_eRTK_tcb rom_tcb[VANZTASK]={
@@ -178,16 +164,14 @@ const t_eRTK_tcb rom_tcb[VANZTASK]={
 
 int main( void ) {
 #if defined (__SAMD21J18A__)
-  //REG_NVMCTRL_CTRLB|=( 1<<1 ); //1ws
   InitTraceBuffer();
 #endif
-	//asmtest();
   eRTK_init();
   eRTK_timer_init();
 #if defined (__AVR_ATmega2560__)
   adc_init();
 #endif
   eRTK_go();
-  deadbeef( SYS_UNKNOWN ); //hier duerfen wir nie wieder ankommen, wenn verwaltungsstrukturen i.O. sind
+  deadbeef( SYS_UNKNOWN ); //hier duerfen wir nie wieder ankommen, wenn die verwaltungsstrukturen i.O. sind
  }
 
