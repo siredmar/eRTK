@@ -7,7 +7,8 @@
 #include <string.h>
 #include <stdio.h>
 
-#if defined (__AVR_ATmega2560__)
+
+#if defined (__AVR_ATmega2560__)|(__AVR_ATxmega384C3__)
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
@@ -36,15 +37,15 @@ uint32_t stack[VANZTASK+1][ERTK_STACKSIZE];  /* Jede Task hat Stack a' STACKSIZE
 
 void * stackptr[VANZTASK+1]; /* Ablage fuer Stackpointer der Tasks */
 
-volatile uint8_t akttask;    /* Nummer der aktuellen Task, 0=idle */
+volatile eRTK_TYPE akttask;    /* Nummer der aktuellen Task, 0=idle */
 
 /* struktur task control block */
 typedef struct s_tcd {    /* queue mit ordnungskriterium task prioritaet 255..0 */
   struct s_tcd * pnext;   /* 1. element immer verkettungszeiger !!! */
   struct s_tcd * pbefore; /* vorgaenger in liste */
-  uint8_t tid;            /* index aus der reihenfolge der statischen deklaration */
-  uint8_t prio;           /* 0..255 */
-  uint8_t timer;          /* timeout counter mit system tick aufloesung */
+  eRTK_TYPE tid;          /* index aus der reihenfolge der statischen deklaration */
+  eRTK_TYPE prio;         /* 0..255 */
+  eRTK_TYPE timer;        /* timeout counter mit system tick aufloesung */
 #ifdef ERTK_DEBUG
   uint16_t param0;
   void * param1;
@@ -102,20 +103,20 @@ void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
 #elif defined (__SAMD21J18A__)
 void  __attribute__ ((optimize("O2"))) eRTK_Idle( void ) {
   #ifdef ERTK_DEBUG
-  while( 1 ) {           //S=14T
-	cli();               //cpsid i 1T
-	++eRTK_perfcount;    //ldr r2, [r3] / adds r2, #1 / str	r2, [r3]  2T+1T+2T
-	sei();               //cpsie i 1T
-	oIDLEfast( 1 );      //ldr	r1, [r3] / orrs	r1, r0 / str	r1, [r3]   2T+1T+2T
+    while( 1 ) {           //S=14T
+    cli();               //cpsid i 1T
+    ++eRTK_perfcount;    //ldr r2, [r3] / adds r2, #1 / str	r2, [r3]  2T+1T+2T
+    sei();               //cpsie i 1T
+    oIDLEfast( 1 );      //ldr	r1, [r3] / orrs	r1, r0 / str	r1, [r3]   2T+1T+2T
    }                     //b	#-18 2T
   #else
   while( 1 ) {
-	set_sleep_mode( SLEEP_MODE_IDLE );
-	sleep_enable();
-	sei();
-	oIDLE( 1 );
-	sleep_cpu();
-	sleep_disable();
+    set_sleep_mode( SLEEP_MODE_IDLE );
+    sleep_enable();
+    sei();
+    oIDLE( 1 );
+    sleep_cpu();
+    sleep_disable();
    }
   #endif
  }
@@ -203,8 +204,11 @@ void * pp_stack; //speicher fuer stackpointer waehrend push/pop
 
 void __attribute__ ((naked)) eRTK_scheduler( void ) { /* start der hoechstprioren ready task, oder idle task, oder der b�ffel wenn alles scheitert ;) */
   push();
+#ifdef ERTK_DEBUG 
+  //stack overflow check, stack pointer in pp_stack uebergeben
+  if( pp_stack < ( void * )&stack[akttask][ERTK_STACKSIZE-ERTK_STACKLOWMARK] ) deadbeef( SYS_STACKOVERFLOW );
+#endif
   stackptr[akttask]=pp_stack;
-//pop();
   //
   if( pTaskRdy ) { //da muss natuerlich immer was drinstehen ;)
     //do round robin bei mehreren mit gleicher prio
@@ -331,12 +335,12 @@ static __inline__ void removeat( s_tcd *pthis ) { //den node pthis austragen
    }
  }  
 
-uint8_t eRTK_GetTid( void ) { //holen der eigenen task id
+eRTK_TYPE eRTK_GetTid( void ) { //holen der eigenen task id
   return akttask;
  }
 
 //Verwaltung der ready list mit einfuegen/ausfuegen in der reihenfolge der prio
-void eRTK_SetReady( uint8_t tid ) {
+void eRTK_SetReady( eRTK_TYPE tid ) {
   if( !tid ) deadbeef( SYS_NULLPTR ); //idle task ist immer ready
   if( tcd[tid].pnext || tcd[tid].pbefore ) deadbeef( SYS_VERIFY ); //war gar nicht suspendiert
   //
@@ -353,7 +357,7 @@ void eRTK_SetReady( uint8_t tid ) {
  }
 
 //pTskRdy->tcdx->tcdy->0 es muss immer mindestens ein tcd (idle) in der liste bleiben
-void eRTK_SetSuspended( uint8_t tid ) { //tcd[tid] aus der ready list austragen
+void eRTK_SetSuspended( eRTK_TYPE tid ) { //tcd[tid] aus der ready list austragen
   if( !tid ) deadbeef( SYS_NULLPTR ); //idle task darf nicht suspendiert werden
   if( !tcd[tid].pbefore && !tcd[tid].pnext ) deadbeef( SYS_VERIFY ); //war nicht in ready list
   s_tcd *pthis=pTaskRdy;
@@ -367,7 +371,7 @@ void eRTK_SetSuspended( uint8_t tid ) { //tcd[tid] aus der ready list austragen
    }
  }
 
-void eRTK_wefet( uint8_t timeout ) {
+void eRTK_wefet( eRTK_TYPE timeout ) {
   if( timeout ) { //sonst klinkt sich die task in einem wait_until() fuer immer aus
     ATOMIC_BLOCK( ATOMIC_RESTORESTATE ) { //14+2=16 cycles pro loop -> 16MHz -> 1000 inc/ms
       if( tcd[akttask].timer ) deadbeef( SYS_UNKNOWN );
@@ -381,7 +385,8 @@ void eRTK_wefet( uint8_t timeout ) {
 #endif  
  }
 
-void eRTK_Sleep_ms( uint16_t ms ) {
+
+void eRTK_Sleep_ms( uint16_t ms ) { //macht nur auf avr sinn
   while( ms ) {
     if( ms>255 ) { 
       eRTK_wefet( 255 ); 
@@ -394,11 +399,12 @@ void eRTK_Sleep_ms( uint16_t ms ) {
    }
  }
 
+
 //semaphoren
 #define ANZSEMA 10
-static uint8_t sema[ANZSEMA];
+static eRTK_TYPE sema[ANZSEMA];
 
-static inline __attribute__((__always_inline__)) uint8_t xch ( uint8_t volatile *p, uint8_t x ) {
+static inline __attribute__((__always_inline__)) uint8_t xch ( eRTK_TYPE volatile *p, eRTK_TYPE x ) {
   //wenn die (AVR) cpu xch kennt:
   // __asm volatile ("xch %a1,%0" : "+r"(x) : "z"(p) : "memory");
   register uint8_t tmp;
@@ -410,7 +416,7 @@ static inline __attribute__((__always_inline__)) uint8_t xch ( uint8_t volatile 
   //return x;
  }
 
-void eRTK_get_sema( uint8_t semaid ) { /* Warten bis Semaphore frei ist und danach besetzen */
+void eRTK_get_sema( eRTK_TYPE semaid ) { /* Warten bis Semaphore frei ist und danach besetzen */
   if( semaid>=ANZSEMA ) deadbeef( SYS_UNKNOWN );
   while( xch( &sema[semaid], 1 ) ) { /* >0 = sema blockiert */
     sei();
@@ -418,13 +424,13 @@ void eRTK_get_sema( uint8_t semaid ) { /* Warten bis Semaphore frei ist und dana
    }
  }
 
-void eRTK_free_sema( uint8_t semaid ) {
+void eRTK_free_sema( eRTK_TYPE semaid ) {
   if( semaid>=ANZSEMA ) deadbeef( SYS_UNKNOWN );
   xch( &sema[semaid], 0 ) ;
  }
 
 void sema_init( void ) {
-  static uint8_t n;
+  static eRTK_TYPE n;
   for( n=0; n<ANZSEMA; n++ ) {
     sema[n]=0; /* ff=keine task wartend */
    }
@@ -474,8 +480,8 @@ stck[n][STACKSIZE]
 -39 r31     
 */
 void eRTK_init( void ) { /* Initialisierung der Daten des Echtzeitsystems */
-  uint8_t n, prio, index;
-  uint8_t task;
+  eRTK_TYPE n, prio, index;
+  eRTK_TYPE task;
   //
   for( n=0; n<VANZTASK+1; n++ ) {
     tcd[n].pnext=NULL; /* verkettung der tcd's in unsortiertem grundzustand */
@@ -586,8 +592,9 @@ void eRTK_init( void ) { /* Initialisierung der Daten des Echtzeitsystems */
     eRTK_WaitUntil( now+10 );
 */
 union {
-  volatile uint8_t timer8[2];
-  volatile uint16_t timer16;
+  volatile uint8_t timer8[4];
+  volatile uint16_t timer16[2];
+  volatile uint32_t timer32;
  } eRTK_m_timer;
  
 uint8_t eRTK_GetTimer8( void ) { //256ms bis overflow
@@ -597,20 +604,34 @@ uint8_t eRTK_GetTimer8( void ) { //256ms bis overflow
 uint16_t eRTK_GetTimer16( void ) { //wenn 256ms nicht reichen
   register uint16_t val;
   ATOMIC_BLOCK( ATOMIC_RESTORESTATE	) { 	
-    val=eRTK_m_timer.timer16;
+    val=eRTK_m_timer.timer16[0];
    }
   return val;
  }
 
-void eRTK_WaitUntil( uint8_t then ) {
+#if defined (__SAMD21J18A__)
+uint32_t eRTK_GetTimer32( void ) { //wenn 65s nicht reichen
+  register uint32_t val;
+  ATOMIC_BLOCK( ATOMIC_RESTORESTATE	) {
+    val=eRTK_m_timer.timer32;
+   }
+  return val;
+ }
+#endif
+
+void eRTK_WaitUntil( eRTK_TYPE then ) {
+#if defined (__AVR_ATmega2560__) ||(__AVR_ATxmega384C3__)
   eRTK_wefet( then-eRTK_GetTimer8() );
+#elif defined (__SAMD21J18A__)
+  eRTK_wefet( then-eRTK_GetTimer32() );
+#endif  
  }
 
 //setzen der prioritaet fuer eine task
 //tid=0 setze die eigene prioritaet oder sonst die einer anderen
 //prio=neue prioritaet
 //schedule_immediately wenn true dann wird sofort eine neue Prozesstabelle ermittelt und der hoechstpriore prozess gestartet
-void eRTK_cpri( uint8_t tid, uint8_t prio, uint8_t schedule_immediately ) {
+void eRTK_cpri( eRTK_TYPE tid, eRTK_TYPE prio, eRTK_TYPE schedule_immediately ) {
   if( tid==0 ) tid=akttask;
   if( tid<VANZTASK ) {
     tcd[akttask].prio=prio;
@@ -625,7 +646,7 @@ void
 #endif
 eRTK_timertick( void ) { 
   oIDLE( 0 );
-#ifdef ERTK_DEBUG
+#if 0
   //stack overflow check, stack pointer in pp_stack uebergeben
   #if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
     asm volatile( "in r0, __SP_L__ \n" );
@@ -639,11 +660,15 @@ eRTK_timertick( void ) {
   #endif
   if( pp_stack < ( void * )&stack[akttask][ERTK_STACKSIZE-ERTK_STACKLOWMARK] ) deadbeef( SYS_STACKOVERFLOW );
 #endif  
-  if( eRTK_ticks<65535u ) ++eRTK_ticks;
+  if( eRTK_ticks<UINT_MAX ) ++eRTK_ticks;
+#if defined (__AVR_ATmega2560__)||(__AVR_ATxmega384C3__)
   ++eRTK_m_timer.timer16;
+#elif defined (__SAMD21J18A__)
+  ++eRTK_m_timer.timer32;
+#endif
   register s_tcd *p=tcd;
   //timer service
-  for( register uint8_t n=0; n<VANZTASK+1; n++ ) {
+  for( register eRTK_TYPE n=0; n<VANZTASK+1; n++ ) {
     if( p->timer ) {
       if( !--p->timer ) {
         eRTK_SetReady( p->tid );
