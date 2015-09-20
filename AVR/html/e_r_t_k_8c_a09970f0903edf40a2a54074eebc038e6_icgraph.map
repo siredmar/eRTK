@@ -1,7 +1,0 @@
-<map id="eRTK_GetTid" name="eRTK_GetTid">
-<area shape="rect" id="node2" href="$adc_8h.html#a3d0a4132cd86a5ecdfc21654cdca8b89" title="adc_wait" alt="" coords="152,5,225,32"/>
-<area shape="rect" id="node4" href="$uart_8h.html#ab83a31dd12d15febaf2e02c2a73a81d4" title="read" alt="" coords="165,56,212,83"/>
-<area shape="rect" id="node6" href="$uart_8h.html#a39dc8420d8c03bc39479e40f91a8b28f" title="write" alt="" coords="164,107,213,133"/>
-<area shape="rect" id="node3" href="$main_8c.html#a06b217051b843fee588ec8f4ac1139ca" title="tskADC" alt="" coords="277,5,344,32"/>
-<area shape="rect" id="node5" href="$main_8c.html#ae1a6ddece7f21bcde56719ce12c0d4b0" title="tskUART" alt="" coords="273,81,348,108"/>
-</map>

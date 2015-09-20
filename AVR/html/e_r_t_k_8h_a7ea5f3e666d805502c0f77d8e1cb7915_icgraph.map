@@ -1,6 +1,0 @@
-<map id="eRTK_SetReady" name="eRTK_SetReady">
-<area shape="rect" id="node2" href="$e_r_t_k_8h.html#a3631624090b7ea09b3a64993b9c979e7" title="eRTK_init" alt="" coords="181,5,260,32"/>
-<area shape="rect" id="node4" href="$e_r_t_k_8c.html#a4aa89b01a30bae72c6046aefc91072fa" title="__attribute__" alt="" coords="172,56,269,83"/>
-<area shape="rect" id="node5" href="$uart_8c.html#a084f0a9cf05b1877bd8a71a90dae7ff8" title="ISR" alt="" coords="199,107,242,133"/>
-<area shape="rect" id="node3" href="$main_8c.html#a840291bc02cba5474a4cb46a9b9566fe" title="main" alt="" coords="317,5,368,32"/>
-</map>

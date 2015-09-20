@@ -1,8 +1,0 @@
-<map id="tskADC" name="tskADC">
-<area shape="rect" id="node2" href="$adc_8c.html#a3d0a4132cd86a5ecdfc21654cdca8b89" title="adc_wait" alt="" coords="295,56,369,83"/>
-<area shape="rect" id="node6" href="$e_r_t_k_8c.html#ac0c35182aeab65219bdf56d0f7d37aa0" title="eRTK_Sleep_ms" alt="" coords="120,107,239,133"/>
-<area shape="rect" id="node3" href="$e_r_t_k_8c.html#a09970f0903edf40a2a54074eebc038e6" title="eRTK_GetTid" alt="" coords="449,5,548,32"/>
-<area shape="rect" id="node4" href="$e_r_t_k_8c.html#aa63d7b8eeb6b2a9b10664b54f6e78e55" title="eRTK_SetSuspended" alt="" coords="425,107,572,133"/>
-<area shape="rect" id="node5" href="$e_r_t_k_8h.html#a8a6bae5404d98108aa2392f69b27b983" title="deadbeef" alt="" coords="620,107,695,133"/>
-<area shape="rect" id="node7" href="$e_r_t_k_8c.html#a3d802070bf824d2fadeda7297e158d32" title="eRTK_wefet" alt="" coords="287,107,377,133"/>
-</map>
