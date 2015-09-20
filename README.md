@@ -1,3 +1,7 @@
+WARNING: This repository won't be updated anymore!
+Please check out the current source at: https://github.com/siredmar/EdmarOs
+--------------------------------------------------------------------------
+
 This is EdmarOs
 EdmarOs is RTOS for different platforms (like AVR, ARM, ...)
 
