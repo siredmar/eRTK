@@ -4,7 +4,7 @@
  * Created: 27.05.2015 12:57:21
  *  Author: er
  */ 
-#include "../Os/eRTK.h"
+#include "../Os/Os.h"
 #include "adc.h"
 
 #if defined (__AVR_ATmega2560__)

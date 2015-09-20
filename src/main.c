@@ -43,8 +43,8 @@
 
 #include <Std_Types.h>
 #include <stdio.h>
-#include "Os/eRTK_config.h"
 #include "Os/Os.h"
+#include "Os/Os_Cfg.h"
 
 void tskHighPrio( uint16 param0, void *param1 ) { //prio ist 20
   while( 1 ) { //kurze aktivitaet auf prio 20 muss alles auf prio 10 sofort unterbrechen
@@ -91,15 +91,6 @@ void tskUART( uint16 param0, void *param1 ) { //prio ist 10
 //   }
 // }
 
-const Os_TaskConfigType Os_TaskConfig[OS_MAX_NUMBER_OF_TASKS]={
-  //tid    adresse    prio  p0 p1
-  /*1*/  { tskUART,     10, 0, "UART1" },
-  /*2*/  { tskUART,     10, 1, "UART2" },
-  /*3*/  { tskUART,     10, 2, "UART3" },
-  /*4*/  { tskUART,     10, 3, "UART4" },
-  /*5*/  { tskHighPrio, 20, 1, "highp" },
-  /*4*/  { tskUART,     10, 3, "UART4" },
- };
 
 int main( void ) {
   Os_Init();

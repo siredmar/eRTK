@@ -15,7 +15,7 @@ FORMAT = ihex
 #FORMAT = binary
 TARGET = main
 #SRC = src/uart/uart.c src/twi/twimaster.c src/gpio/gpio_lcfg.c src/gpio/gpio.c src/$(TARGET).c
-SRC = src/Os/eRTK.c src/AVR/uart.c src/$(TARGET).c
+SRC = src/Os/Os.c src/Os/Os_Lcfg.c src/AVR/uart.c src/$(TARGET).c
 INC=./inc
 
 ASRC =

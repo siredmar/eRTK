@@ -2,7 +2,6 @@
 #define OS_H_
 #include <stddef.h>
 #include <stdint.h>
-#include "eRTK_config.h"
 #include "Os_Cfg.h"
 #include <../inc/Std_Types.h>
 
@@ -53,7 +52,8 @@ typedef enum
 
 
 //der task control block
-typedef struct {
+typedef struct
+{
     void (*task )(uint16 param0, void *param1);
     Os_TaskPrioType TaskPrio;
     uint16 param0;
@@ -61,7 +61,7 @@ typedef struct {
 } Os_TaskConfigType;
 
 
-extern const Os_TaskConfigType Os_TaskConfig[OS_MAX_NUMBER_OF_TASKS]; //das soll in der anwendung definiert sein
+//extern const Os_TaskConfigType Os_TaskConfig[OS_MAX_NUMBER_OF_TASKS]; //das soll in der anwendung definiert sein
 
 void __attribute__ ((naked)) eRTK_scheduler(void); // start der hoechstprioren ready task, notfalls idle
 
@@ -75,21 +75,14 @@ uint16        Os_GetTimer16(void);            //systemzeit 1000Hz in 16 Bit
 Os_TaskIdType Os_GetTaskId(void);                //holen der eigenen task id
 void          Os_SetReady(Os_TaskIdType TaskId);     //task fuer bereit erklaeren
 void          Os_SetSuspended(Os_TaskIdType TaskId); //task suspendieren
-void          Os_WaitUntil(eRTK_TYPE then);   //warte auf den zeitpunkt
+void          Os_WaitUntil(uint8 then);   //warte auf den zeitpunkt
 void          Os_SleepMs(uint16 ms);       //warte eine gewisse zeit
 void          Os_GetSema(Os_SemaphoreType semaid);  //Warten bis Semaphore frei ist und danach besetzen
 void          Os_FreeSema(Os_SemaphoreType semaid);
 void          Os_SemaphoreInit(void);
-void          Os_SuspendAndWait(eRTK_TYPE timeout);    //Task suspendieren fuer eine gewisse zeit
+void          Os_SuspendAndWait(uint8 timeout);    //Task suspendieren fuer eine gewisse zeit
 void          Os_ChangeTaskPriority(Os_TaskIdType TaskId, Os_TaskPrioType prio, Os_ScheduleImmediatyleType schedule);
 void          Os_Scheduler(void);
-
-//eRTK_cpri() setzen der prioritaet fuer eine task
-//tid=0 setze die eigene prioritaet oder sonst die einer anderen task
-//prio=neue prioritaet
-//schedule_immediately wenn true dann wird sofort eine neue Prozesstabelle ermittelt und der hoechstpriore prozess gestartet
-void eRTK_cpri(eRTK_TYPE tid, eRTK_TYPE prio, eRTK_TYPE schedule_immediately);
-
 
 //allgemeine fehlerbehandlung, kann je nach bedarf umgelenkt werden
 void Os_ErrorHook(Os_ErrorHookType error);              //allgemeine fehler routine
